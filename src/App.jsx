@@ -1,16 +1,25 @@
 import { useEffect, useState } from "react";
 
+import { supabase } from "./lib/supabaseClient";
+
+import Login from "./pages/Login.jsx";
+import Signup from "./pages/Signup.jsx";
+
+
+/* =========================================================
+   LINKS
+========================================================= */
+
+const DEFAULT_GITHUB =
+  "https://github.com/";
+
+const DEFAULT_LINKEDIN =
+  "https://www.linkedin.com/";
+
+
 /* =========================================================
    DATA
 ========================================================= */
-
-const student = {
-  name: "Kishore",
-  streak: 12,
-  completed: 18,
-  totalDays: 60,
-  rank: 24,
-};
 
 const today = {
   day: 12,
@@ -47,86 +56,289 @@ const achievements = [
   },
 ];
 
-/* =========================================================
-   IMPORTANT LINKS
-========================================================= */
-
-const GITHUB_URL =
-  "https://github.com/kishorevedhupillai/ABTalks-Vibe-Hackathon-MCBOYS";
-
-const LINKEDIN_URL =
-  "https://www.linkedin.com/in/kishore-vedhupillai-jayaraman-074201339/";
 
 /* =========================================================
    APP
 ========================================================= */
 
 function App() {
-  const [path, setPath] = useState(window.location.pathname);
+
+  const [path, setPath] = useState(
+    window.location.pathname
+  );
+
+  const [user, setUser] = useState(null);
+
+  const [loading, setLoading] = useState(true);
+
+
+  /* -------------------------------------------------------
+     AUTH CHECK
+  ------------------------------------------------------- */
 
   useEffect(() => {
+
+    const getUser = async () => {
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      setUser(user);
+
+      setLoading(false);
+    };
+
+    getUser();
+
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+
+        setUser(session?.user ?? null);
+      }
+    );
+
+
     const handlePopState = () => {
+
       setPath(window.location.pathname);
+
       window.scrollTo(0, 0);
     };
 
-    window.addEventListener("popstate", handlePopState);
+
+    window.addEventListener(
+      "popstate",
+      handlePopState
+    );
+
 
     return () => {
-      window.removeEventListener("popstate", handlePopState);
+
+      subscription.unsubscribe();
+
+      window.removeEventListener(
+        "popstate",
+        handlePopState
+      );
+
     };
+
   }, []);
 
+
+  /* -------------------------------------------------------
+     NAVIGATION
+  ------------------------------------------------------- */
+
   const navigate = (url) => {
-    window.history.pushState({}, "", url);
+
+    window.history.pushState(
+      {},
+      "",
+      url
+    );
+
     setPath(url);
+
     window.scrollTo(0, 0);
   };
 
-  if (path === "/dashboard") {
-    return <Dashboard navigate={navigate} />;
+
+  /* -------------------------------------------------------
+     LOGOUT
+  ------------------------------------------------------- */
+
+  const logout = async () => {
+
+    await supabase.auth.signOut();
+
+    navigate("/login");
+  };
+
+
+  if (loading) {
+
+    return (
+      <div className="loading-screen">
+        <div className="loading-logo">
+          AB<span>Talks</span>
+        </div>
+
+        <p>
+          Loading...
+        </p>
+      </div>
+    );
   }
+
+
+  /* -------------------------------------------------------
+     ROUTES
+  ------------------------------------------------------- */
+
+  if (path === "/login") {
+
+    return (
+      <Login
+        navigate={navigate}
+      />
+    );
+  }
+
+
+  if (path === "/signup") {
+
+    return (
+      <Signup
+        navigate={navigate}
+      />
+    );
+  }
+
+
+  if (path === "/dashboard") {
+
+    if (!user) {
+
+      navigate("/login");
+
+      return null;
+    }
+
+    return (
+      <Dashboard
+        navigate={navigate}
+        user={user}
+        logout={logout}
+      />
+    );
+  }
+
 
   if (path === "/day/12") {
-    return <ChallengeDay navigate={navigate} />;
+
+    if (!user) {
+
+      navigate("/login");
+
+      return null;
+    }
+
+    return (
+      <ChallengeDay
+        navigate={navigate}
+        user={user}
+        logout={logout}
+      />
+    );
   }
 
-  return <Landing navigate={navigate} />;
+
+  return (
+    <Landing
+      navigate={navigate}
+      user={user}
+    />
+  );
 }
+
 
 /* =========================================================
    NAVBAR
 ========================================================= */
 
-function Navbar({ navigate }) {
+function Navbar({
+  navigate,
+  user,
+  logout,
+}) {
+
   return (
     <header className="navbar">
 
       <button
         className="logo"
-        onClick={() => navigate("/")}
         type="button"
+        onClick={() => navigate("/")}
       >
         AB<span>Talks</span>
       </button>
 
+
       <div className="nav-right">
 
-        <button
-          className="nav-dashboard"
-          onClick={() => navigate("/dashboard")}
-          type="button"
-        >
-          Dashboard
-        </button>
+        {user ? (
 
-        <button
-          className="profile-button"
-          onClick={() => navigate("/dashboard")}
-          type="button"
-        >
-          K
-        </button>
+          <>
+
+            <button
+              className="nav-dashboard"
+              type="button"
+              onClick={() =>
+                navigate("/dashboard")
+              }
+            >
+              Dashboard
+            </button>
+
+
+            <button
+              className="logout-button"
+              type="button"
+              onClick={logout}
+            >
+              Logout
+            </button>
+
+
+            <button
+              className="profile-button"
+              type="button"
+              onClick={() =>
+                navigate("/dashboard")
+              }
+            >
+              {(user.user_metadata?.name ||
+                user.email ||
+                "U")
+                .charAt(0)
+                .toUpperCase()}
+            </button>
+
+          </>
+
+        ) : (
+
+          <>
+
+            <button
+              className="nav-dashboard"
+              type="button"
+              onClick={() =>
+                navigate("/login")
+              }
+            >
+              Login
+            </button>
+
+
+            <button
+              className="profile-button"
+              type="button"
+              onClick={() =>
+                navigate("/signup")
+              }
+            >
+              +
+            </button>
+
+          </>
+
+        )}
 
       </div>
 
@@ -134,15 +346,23 @@ function Navbar({ navigate }) {
   );
 }
 
+
 /* =========================================================
-   LANDING PAGE
+   LANDING
 ========================================================= */
 
-function Landing({ navigate }) {
+function Landing({
+  navigate,
+  user,
+}) {
+
   return (
     <div className="app">
 
-      <Navbar navigate={navigate} />
+      <Navbar
+        navigate={navigate}
+        user={user}
+      />
 
       <main>
 
@@ -152,25 +372,37 @@ function Landing({ navigate }) {
             ✦ BUILT FOR STUDENTS
           </div>
 
+
           <h1>
             Build every day.
             <br />
             <span>Be seen.</span>
           </h1>
 
+
           <p className="hero-description">
-            A 60-day coding challenge that helps Indian college
-            students build consistently, prove their work and get
-            noticed by recruiters.
+            A 60-day coding challenge that helps
+            Indian college students build consistently,
+            prove their work and get noticed by recruiters.
           </p>
+
 
           <button
             className="primary-button"
             type="button"
-            onClick={() => navigate("/dashboard")}
+            onClick={() =>
+              navigate(
+                user
+                  ? "/dashboard"
+                  : "/signup"
+              )
+            }
           >
-            Start your challenge →
+            {user
+              ? "Go to dashboard →"
+              : "Start your challenge →"}
           </button>
+
 
           <p className="hero-note">
             Free · Student focused · 60 days
@@ -178,33 +410,29 @@ function Landing({ navigate }) {
 
         </section>
 
-        {/* STATS */}
 
         <section className="stats">
 
-          <div className="stat">
-            <span className="stat-icon">🔥</span>
-            <strong>60</strong>
-            <small>Days</small>
-          </div>
+          <Stat
+            icon="🔥"
+            number="60"
+            label="Days"
+          />
 
-          <div className="stat">
-            <span className="stat-icon code-icon">
-              {"</>"}
-            </span>
-            <strong>1</strong>
-            <small>Build / day</small>
-          </div>
+          <Stat
+            icon="</>"
+            number="1"
+            label="Build / day"
+          />
 
-          <div className="stat">
-            <span className="stat-icon">🏆</span>
-            <strong>∞</strong>
-            <small>Growth</small>
-          </div>
+          <Stat
+            icon="🏆"
+            number="∞"
+            label="Growth"
+          />
 
         </section>
 
-        {/* HOW IT WORKS */}
 
         <section className="how-section">
 
@@ -212,16 +440,20 @@ function Landing({ navigate }) {
             HOW IT WORKS
           </div>
 
+
           <h2>
             Small progress.
             <br />
-            <span>Every single day.</span>
+            <span>
+              Every single day.
+            </span>
           </h2>
+
 
           <div className="feature-list">
 
             <Feature
-              icon={"</>"}
+              icon="</>"
               title="Build something"
               text="Complete a daily coding task and push your work to GitHub."
             />
@@ -242,7 +474,6 @@ function Landing({ navigate }) {
 
         </section>
 
-        {/* CTA */}
 
         <section className="cta-card">
 
@@ -250,10 +481,17 @@ function Landing({ navigate }) {
             Ready to build your streak?
           </h2>
 
+
           <button
             className="secondary-button"
             type="button"
-            onClick={() => navigate("/dashboard")}
+            onClick={() =>
+              navigate(
+                user
+                  ? "/dashboard"
+                  : "/signup"
+              )
+            }
           >
             Explore dashboard →
           </button>
@@ -262,47 +500,111 @@ function Landing({ navigate }) {
 
       </main>
 
+
       <Footer />
 
     </div>
   );
 }
 
-/* =========================================================
-   FEATURE
-========================================================= */
-
-function Feature({ icon, title, text }) {
-  return (
-    <div className="feature-card">
-
-      <div className="feature-icon">
-        {icon}
-      </div>
-
-      <div>
-        <h3>{title}</h3>
-        <p>{text}</p>
-      </div>
-
-    </div>
-  );
-}
 
 /* =========================================================
    DASHBOARD
 ========================================================= */
 
-function Dashboard({ navigate }) {
+function Dashboard({
+  navigate,
+  user,
+  logout,
+}) {
+
+  const [githubUrl, setGithubUrl] =
+    useState("");
+
+  const [linkedinUrl, setLinkedinUrl] =
+    useState("");
+
+  const [saved, setSaved] =
+    useState(false);
+
+
+  /* -------------------------------------------------------
+     LOAD USER LINKS
+  ------------------------------------------------------- */
+
+  useEffect(() => {
+
+    setGithubUrl(
+      user.user_metadata?.github_url ||
+      ""
+    );
+
+    setLinkedinUrl(
+      user.user_metadata?.linkedin_url ||
+      ""
+    );
+
+  }, [user]);
+
+
+  /* -------------------------------------------------------
+     SAVE USER LINKS
+  ------------------------------------------------------- */
+
+  const saveProfile = async () => {
+
+    setSaved(false);
+
+
+    const {
+      data,
+      error,
+    } = await supabase.auth.updateUser({
+
+      data: {
+        name:
+          user.user_metadata?.name ||
+          user.email?.split("@")[0] ||
+          "Student",
+
+        github_url:
+          githubUrl.trim(),
+
+        linkedin_url:
+          linkedinUrl.trim(),
+      },
+
+    });
+
+
+    if (!error && data.user) {
+
+      setSaved(true);
+    }
+
+  };
+
 
   const percentage = Math.round(
-    (student.completed / student.totalDays) * 100
+    (18 / 60) * 100
   );
+
+
+  const name =
+    user.user_metadata?.name ||
+    user.email?.split("@")[0] ||
+    "Student";
+
 
   return (
     <div className="app">
 
-      <Navbar navigate={navigate} />
+      <Navbar
+        navigate={navigate}
+        user={user}
+        logout={logout}
+      />
+
 
       <main className="dashboard-page">
 
@@ -315,79 +617,110 @@ function Dashboard({ navigate }) {
             </div>
 
             <h1>
-              Hey {student.name} 👋
+              Hey {name} 👋
             </h1>
 
             <p>
-              Keep building. Your consistency is your advantage.
+              Keep building. Your consistency
+              is your advantage.
             </p>
 
           </div>
 
+
           <div className="day-pill">
-            DAY {today.day}/60
+            DAY 12/60
           </div>
 
         </section>
 
-        {/* DASHBOARD STATS */}
+
+        {/* STATS */}
 
         <section className="dashboard-stats">
 
           <div className="dashboard-card">
 
             <div className="card-title-row">
-              <span>Current streak</span>
-              <span>🔥</span>
+
+              <span>
+                Current streak
+              </span>
+
+              <span>
+                🔥
+              </span>
+
             </div>
 
+
             <div className="big-number">
-              {student.streak}
+              12
               <small> days</small>
             </div>
 
+
             <p>
-              You're on a roll! Keep your streak alive today.
+              You're on a roll!
+              Keep your streak alive today.
             </p>
 
+
             <div className="progress-line">
+
               <div
                 style={{
-                  width: `${Math.min(student.streak * 5, 100)}%`,
+                  width: "60%",
                 }}
               />
+
             </div>
 
           </div>
 
+
           <div className="dashboard-card">
 
             <div className="card-title-row">
-              <span>Overall completion</span>
-              <span>📈</span>
+
+              <span>
+                Overall completion
+              </span>
+
+              <span>
+                📈
+              </span>
+
             </div>
+
 
             <div className="big-number">
               {percentage}%
             </div>
 
+
             <p>
-              {student.completed} of {student.totalDays} days completed
+              18 of 60 days completed
             </p>
 
+
             <div className="progress-line">
+
               <div
                 style={{
-                  width: `${percentage}%`,
+                  width:
+                    `${percentage}%`,
                 }}
               />
+
             </div>
 
           </div>
 
         </section>
 
-        {/* TODAY'S TASK */}
+
+        {/* TODAY */}
 
         <section className="today-card">
 
@@ -399,11 +732,14 @@ function Dashboard({ navigate }) {
                 TODAY'S TASK
               </div>
 
+
               <h2>
-                Day {today.day}: {today.title}
+                Day 12:{" "}
+                {today.title}
               </h2>
 
             </div>
+
 
             <span className="difficulty">
               {today.difficulty}
@@ -411,27 +747,115 @@ function Dashboard({ navigate }) {
 
           </div>
 
+
           <p className="today-description">
             {today.description}
           </p>
 
+
           <div className="task-tags">
 
-            <span>◷ {today.time}</span>
-            <span>💻 Coding</span>
-            <span>🎯 Skill building</span>
+            <span>
+              ◷ {today.time}
+            </span>
+
+            <span>
+              💻 Coding
+            </span>
+
+            <span>
+              🎯 Skill building
+            </span>
 
           </div>
+
 
           <button
             className="primary-button"
             type="button"
-            onClick={() => navigate("/day/12")}
+            onClick={() =>
+              navigate("/day/12")
+            }
           >
             Open today's challenge →
           </button>
 
         </section>
+
+
+        {/* PROFILE */}
+
+        <section className="profile-card">
+
+          <div className="section-label">
+            YOUR PROFILE LINKS
+          </div>
+
+
+          <h2>
+            Connect your work
+          </h2>
+
+
+          <p>
+            These links belong only to your
+            logged-in account.
+          </p>
+
+
+          <div className="profile-form">
+
+            <label>
+              GitHub profile / repository URL
+            </label>
+
+            <input
+              type="url"
+              placeholder="https://github.com/yourusername"
+              value={githubUrl}
+              onChange={(event) =>
+                setGithubUrl(
+                  event.target.value
+                )
+              }
+            />
+
+
+            <label>
+              LinkedIn profile / post URL
+            </label>
+
+            <input
+              type="url"
+              placeholder="https://linkedin.com/in/yourname"
+              value={linkedinUrl}
+              onChange={(event) =>
+                setLinkedinUrl(
+                  event.target.value
+                )
+              }
+            />
+
+
+            <button
+              className="primary-button"
+              type="button"
+              onClick={saveProfile}
+            >
+              Save profile links →
+            </button>
+
+
+            {saved && (
+              <div className="auth-success">
+                Profile links saved successfully.
+              </div>
+            )}
+
+          </div>
+
+        </section>
+
 
         {/* ACHIEVEMENTS */}
 
@@ -441,61 +865,50 @@ function Dashboard({ navigate }) {
             ACHIEVEMENTS
           </div>
 
+
           <h2>
             Your wins
           </h2>
 
+
           <div className="achievement-grid">
 
-            {achievements.map((item, index) => (
-              <div
-                className="achievement-card"
-                key={index}
-              >
+            {achievements.map(
+              (item, index) => (
 
-                <div className="achievement-icon">
-                  {item.icon}
+                <div
+                  className="achievement-card"
+                  key={index}
+                >
+
+                  <div className="achievement-icon">
+                    {item.icon}
+                  </div>
+
+
+                  <div>
+
+                    <h3>
+                      {item.title}
+                    </h3>
+
+                    <p>
+                      {item.description}
+                    </p>
+
+                  </div>
+
                 </div>
 
-                <div>
-                  <h3>{item.title}</h3>
-                  <p>{item.description}</p>
-                </div>
+              )
+            )}
 
-              </div>
-            ))}
-
-          </div>
-
-        </section>
-
-        {/* RANK */}
-
-        <section className="rank-card">
-
-          <div>
-
-            <div className="section-label">
-              STUDENT STANDING
-            </div>
-
-            <h2>
-              You're ranked #{student.rank}
-            </h2>
-
-            <p>
-              Keep completing daily challenges to climb higher.
-            </p>
-
-          </div>
-
-          <div className="rank-trophy">
-            🏆
           </div>
 
         </section>
 
       </main>
+
 
       <Footer />
 
@@ -503,56 +916,106 @@ function Dashboard({ navigate }) {
   );
 }
 
+
 /* =========================================================
    CHALLENGE DAY
 ========================================================= */
 
-function ChallengeDay({ navigate }) {
+function ChallengeDay({
+  navigate,
+  user,
+  logout,
+}) {
+
+  const [githubUrl, setGithubUrl] =
+    useState(
+      user.user_metadata?.github_url ||
+      DEFAULT_GITHUB
+    );
+
+
+  const [linkedinUrl, setLinkedinUrl] =
+    useState(
+      user.user_metadata?.linkedin_url ||
+      DEFAULT_LINKEDIN
+    );
+
+
+  useEffect(() => {
+
+    setGithubUrl(
+      user.user_metadata?.github_url ||
+      DEFAULT_GITHUB
+    );
+
+    setLinkedinUrl(
+      user.user_metadata?.linkedin_url ||
+      DEFAULT_LINKEDIN
+    );
+
+  }, [user]);
+
 
   return (
     <div className="app">
 
-      <Navbar navigate={navigate} />
+      <Navbar
+        navigate={navigate}
+        user={user}
+        logout={logout}
+      />
+
 
       <main className="challenge-page">
-
-        {/* BACK */}
 
         <button
           className="back-button"
           type="button"
-          onClick={() => navigate("/dashboard")}
+          onClick={() =>
+            navigate("/dashboard")
+          }
         >
           ← Back to dashboard
         </button>
+
 
         {/* HEADER */}
 
         <section className="challenge-header">
 
           <div className="day-label">
-            DAY {today.day} / 60
+            DAY 12 / 60
           </div>
+
 
           <h1>
             {today.title}
           </h1>
 
+
           <p>
             {today.description}
           </p>
 
+
           <div className="challenge-tags">
 
-            <span>⚡ {today.difficulty}</span>
-            <span>◷ {today.time}</span>
-            <span>💻 Web Development</span>
+            <span>
+              ⚡ {today.difficulty}
+            </span>
+
+            <span>
+              ◷ {today.time}
+            </span>
+
+            <span>
+              💻 Web Development
+            </span>
 
           </div>
 
         </section>
 
-        {/* MAIN GRID */}
 
         <section className="challenge-grid">
 
@@ -566,43 +1029,53 @@ function ChallengeDay({ navigate }) {
                 YOUR MISSION
               </div>
 
+
               <h2>
                 Build today's challenge
               </h2>
 
+
               <p>
-                Create a clean and responsive student dashboard.
-                The dashboard should help a student understand
-                their current progress and what they need to
-                complete today.
+                Create a clean and responsive
+                student dashboard. The dashboard
+                should help a student understand
+                their current progress and what
+                they need to complete today.
               </p>
+
 
               <h3>
                 What you need to build
               </h3>
 
+
               <div className="check-list">
 
-                {tasks.map((task, index) => (
-                  <div
-                    className="check-item"
-                    key={index}
-                  >
+                {tasks.map(
+                  (task, index) => (
 
-                    <span className="check-circle">
-                      ✓
-                    </span>
+                    <div
+                      className="check-item"
+                      key={index}
+                    >
 
-                    <span>
-                      {task}
-                    </span>
+                      <span className="check-circle">
+                        ✓
+                      </span>
 
-                  </div>
-                ))}
+                      <span>
+                        {task}
+                      </span>
+
+                    </div>
+
+                  )
+                )}
 
               </div>
 
             </div>
+
 
             {/* PROOF */}
 
@@ -612,17 +1085,20 @@ function ChallengeDay({ navigate }) {
                 SUBMIT YOUR PROOF
               </div>
 
+
               <h2>
                 Show what you built
               </h2>
+
 
               {/* GITHUB */}
 
               <div className="proof-box">
 
                 <div className="proof-icon">
-                  ⌘
+                  GH
                 </div>
+
 
                 <div className="proof-info">
 
@@ -631,22 +1107,27 @@ function ChallengeDay({ navigate }) {
                   </h3>
 
                   <p>
-                    Push your completed work to a public
-                    GitHub repository.
+                    Open your own GitHub
+                    profile or repository.
                   </p>
 
                 </div>
 
+
                 <a
                   className="outline-button"
-                  href={GITHUB_URL}
+                  href={
+                    githubUrl ||
+                    DEFAULT_GITHUB
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Add GitHub →
+                  Open GitHub →
                 </a>
 
               </div>
+
 
               {/* LINKEDIN */}
 
@@ -656,6 +1137,7 @@ function ChallengeDay({ navigate }) {
                   in
                 </div>
 
+
                 <div className="proof-info">
 
                   <h3>
@@ -663,18 +1145,23 @@ function ChallengeDay({ navigate }) {
                   </h3>
 
                   <p>
-                    Share your progress and what you learned today.
+                    Open your own LinkedIn
+                    profile or post.
                   </p>
 
                 </div>
 
+
                 <a
                   className="outline-button"
-                  href={LINKEDIN_URL}
+                  href={
+                    linkedinUrl ||
+                    DEFAULT_LINKEDIN
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Add LinkedIn →
+                  Open LinkedIn →
                 </a>
 
               </div>
@@ -682,6 +1169,7 @@ function ChallengeDay({ navigate }) {
             </div>
 
           </div>
+
 
           {/* SIDEBAR */}
 
@@ -693,19 +1181,26 @@ function ChallengeDay({ navigate }) {
                 YOUR PROGRESS
               </div>
 
+
               <div className="circle-progress">
-                <strong>20%</strong>
+                <strong>
+                  20%
+                </strong>
               </div>
+
 
               <h3>
                 18 / 60 days
               </h3>
 
+
               <p>
-                You're building a strong public learning record.
+                You're building a strong
+                public learning record.
               </p>
 
             </div>
+
 
             <div className="side-card">
 
@@ -713,12 +1208,15 @@ function ChallengeDay({ navigate }) {
                 CURRENT STREAK
               </div>
 
+
               <div className="side-streak">
                 🔥 12 days
               </div>
 
+
               <p>
-                Complete today's task to keep it alive.
+                Complete today's task
+                to keep it alive.
               </p>
 
             </div>
@@ -729,17 +1227,77 @@ function ChallengeDay({ navigate }) {
 
       </main>
 
+
       <Footer />
 
     </div>
   );
 }
 
+
 /* =========================================================
-   FOOTER
+   COMPONENTS
 ========================================================= */
 
+function Stat({
+  icon,
+  number,
+  label,
+}) {
+
+  return (
+    <div className="stat">
+
+      <span className="stat-icon">
+        {icon}
+      </span>
+
+      <strong>
+        {number}
+      </strong>
+
+      <small>
+        {label}
+      </small>
+
+    </div>
+  );
+}
+
+
+function Feature({
+  icon,
+  title,
+  text,
+}) {
+
+  return (
+    <div className="feature-card">
+
+      <div className="feature-icon">
+        {icon}
+      </div>
+
+
+      <div>
+
+        <h3>
+          {title}
+        </h3>
+
+        <p>
+          {text}
+        </p>
+
+      </div>
+
+    </div>
+  );
+}
+
+
 function Footer() {
+
   return (
     <footer className="footer">
 
@@ -754,5 +1312,6 @@ function Footer() {
     </footer>
   );
 }
+
 
 export default App;
