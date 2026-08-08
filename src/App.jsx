@@ -1,21 +1,8 @@
 import { useEffect, useState } from "react";
-
 import { supabase } from "./lib/supabaseClient";
 
 import Login from "./pages/Login.jsx";
 import Signup from "./pages/Signup.jsx";
-
-
-/* =========================================================
-   LINKS
-========================================================= */
-
-const DEFAULT_GITHUB =
-  "https://github.com/";
-
-const DEFAULT_LINKEDIN =
-  "https://www.linkedin.com/";
-
 
 /* =========================================================
    DATA
@@ -56,156 +43,120 @@ const achievements = [
   },
 ];
 
-
 /* =========================================================
    APP
 ========================================================= */
 
 function App() {
-
-  const [path, setPath] = useState(
-    window.location.pathname
-  );
-
+  const [path, setPath] = useState(window.location.pathname);
   const [user, setUser] = useState(null);
-
   const [loading, setLoading] = useState(true);
-
 
   /* -------------------------------------------------------
      AUTH CHECK
   ------------------------------------------------------- */
 
   useEffect(() => {
-
     const getUser = async () => {
-
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
       setUser(user);
-
       setLoading(false);
     };
 
     getUser();
 
-
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-
         setUser(session?.user ?? null);
       }
     );
 
-
     const handlePopState = () => {
-
       setPath(window.location.pathname);
-
       window.scrollTo(0, 0);
     };
-
 
     window.addEventListener(
       "popstate",
       handlePopState
     );
 
-
     return () => {
-
       subscription.unsubscribe();
 
       window.removeEventListener(
         "popstate",
         handlePopState
       );
-
     };
-
   }, []);
-
 
   /* -------------------------------------------------------
      NAVIGATION
   ------------------------------------------------------- */
 
   const navigate = (url) => {
-
-    window.history.pushState(
-      {},
-      "",
-      url
-    );
+    window.history.pushState({}, "", url);
 
     setPath(url);
 
     window.scrollTo(0, 0);
   };
 
-
   /* -------------------------------------------------------
      LOGOUT
   ------------------------------------------------------- */
 
   const logout = async () => {
-
     await supabase.auth.signOut();
 
     navigate("/login");
   };
 
+  /* -------------------------------------------------------
+     LOADING
+  ------------------------------------------------------- */
 
   if (loading) {
-
     return (
       <div className="loading-screen">
         <div className="loading-logo">
           AB<span>Talks</span>
         </div>
 
-        <p>
-          Loading...
-        </p>
+        <p>Loading...</p>
       </div>
     );
   }
 
-
   /* -------------------------------------------------------
-     ROUTES
+     LOGIN
   ------------------------------------------------------- */
 
   if (path === "/login") {
-
-    return (
-      <Login
-        navigate={navigate}
-      />
-    );
+    return <Login navigate={navigate} />;
   }
 
+  /* -------------------------------------------------------
+     SIGNUP
+  ------------------------------------------------------- */
 
   if (path === "/signup") {
-
-    return (
-      <Signup
-        navigate={navigate}
-      />
-    );
+    return <Signup navigate={navigate} />;
   }
 
+  /* -------------------------------------------------------
+     DASHBOARD
+  ------------------------------------------------------- */
 
   if (path === "/dashboard") {
-
     if (!user) {
-
       navigate("/login");
-
       return null;
     }
 
@@ -218,13 +169,13 @@ function App() {
     );
   }
 
+  /* -------------------------------------------------------
+     CHALLENGE
+  ------------------------------------------------------- */
 
   if (path === "/day/12") {
-
     if (!user) {
-
       navigate("/login");
-
       return null;
     }
 
@@ -237,6 +188,9 @@ function App() {
     );
   }
 
+  /* -------------------------------------------------------
+     LANDING
+  ------------------------------------------------------- */
 
   return (
     <Landing
@@ -245,7 +199,6 @@ function App() {
     />
   );
 }
-
 
 /* =========================================================
    NAVBAR
@@ -256,7 +209,6 @@ function Navbar({
   user,
   logout,
 }) {
-
   return (
     <header className="navbar">
 
@@ -268,13 +220,10 @@ function Navbar({
         AB<span>Talks</span>
       </button>
 
-
       <div className="nav-right">
 
         {user ? (
-
           <>
-
             <button
               className="nav-dashboard"
               type="button"
@@ -285,7 +234,6 @@ function Navbar({
               Dashboard
             </button>
 
-
             <button
               className="logout-button"
               type="button"
@@ -294,7 +242,6 @@ function Navbar({
               Logout
             </button>
 
-
             <button
               className="profile-button"
               type="button"
@@ -302,19 +249,17 @@ function Navbar({
                 navigate("/dashboard")
               }
             >
-              {(user.user_metadata?.name ||
+              {(
+                user.user_metadata?.name ||
                 user.email ||
-                "U")
+                "U"
+              )
                 .charAt(0)
                 .toUpperCase()}
             </button>
-
           </>
-
         ) : (
-
           <>
-
             <button
               className="nav-dashboard"
               type="button"
@@ -325,7 +270,6 @@ function Navbar({
               Login
             </button>
 
-
             <button
               className="profile-button"
               type="button"
@@ -335,17 +279,13 @@ function Navbar({
             >
               +
             </button>
-
           </>
-
         )}
 
       </div>
-
     </header>
   );
 }
-
 
 /* =========================================================
    LANDING
@@ -355,7 +295,6 @@ function Landing({
   navigate,
   user,
 }) {
-
   return (
     <div className="app">
 
@@ -372,20 +311,17 @@ function Landing({
             ✦ BUILT FOR STUDENTS
           </div>
 
-
           <h1>
             Build every day.
             <br />
             <span>Be seen.</span>
           </h1>
 
-
           <p className="hero-description">
             A 60-day coding challenge that helps
             Indian college students build consistently,
             prove their work and get noticed by recruiters.
           </p>
-
 
           <button
             className="primary-button"
@@ -403,13 +339,11 @@ function Landing({
               : "Start your challenge →"}
           </button>
 
-
           <p className="hero-note">
             Free · Student focused · 60 days
           </p>
 
         </section>
-
 
         <section className="stats">
 
@@ -433,13 +367,11 @@ function Landing({
 
         </section>
 
-
         <section className="how-section">
 
           <div className="section-label">
             HOW IT WORKS
           </div>
-
 
           <h2>
             Small progress.
@@ -448,7 +380,6 @@ function Landing({
               Every single day.
             </span>
           </h2>
-
 
           <div className="feature-list">
 
@@ -474,13 +405,11 @@ function Landing({
 
         </section>
 
-
         <section className="cta-card">
 
           <h2>
             Ready to build your streak?
           </h2>
-
 
           <button
             className="secondary-button"
@@ -500,13 +429,11 @@ function Landing({
 
       </main>
 
-
       <Footer />
 
     </div>
   );
 }
-
 
 /* =========================================================
    DASHBOARD
@@ -517,7 +444,6 @@ function Dashboard({
   user,
   logout,
 }) {
-
   const [githubUrl, setGithubUrl] =
     useState("");
 
@@ -527,40 +453,35 @@ function Dashboard({
   const [saved, setSaved] =
     useState(false);
 
+  const [saveError, setSaveError] =
+    useState("");
 
   /* -------------------------------------------------------
-     LOAD USER LINKS
+     LOAD CURRENT USER LINKS
   ------------------------------------------------------- */
 
   useEffect(() => {
-
     setGithubUrl(
-      user.user_metadata?.github_url ||
-      ""
+      user.user_metadata?.github_url || ""
     );
 
     setLinkedinUrl(
-      user.user_metadata?.linkedin_url ||
-      ""
+      user.user_metadata?.linkedin_url || ""
     );
-
   }, [user]);
 
-
   /* -------------------------------------------------------
-     SAVE USER LINKS
+     SAVE USER PROFILE
   ------------------------------------------------------- */
 
   const saveProfile = async () => {
-
     setSaved(false);
-
+    setSaveError("");
 
     const {
       data,
       error,
     } = await supabase.auth.updateUser({
-
       data: {
         name:
           user.user_metadata?.name ||
@@ -573,28 +494,26 @@ function Dashboard({
         linkedin_url:
           linkedinUrl.trim(),
       },
-
     });
 
-
-    if (!error && data.user) {
-
-      setSaved(true);
+    if (error) {
+      setSaveError(error.message);
+      return;
     }
 
+    if (data.user) {
+      setSaved(true);
+    }
   };
-
 
   const percentage = Math.round(
     (18 / 60) * 100
   );
 
-
   const name =
     user.user_metadata?.name ||
     user.email?.split("@")[0] ||
     "Student";
-
 
   return (
     <div className="app">
@@ -604,7 +523,6 @@ function Dashboard({
         user={user}
         logout={logout}
       />
-
 
       <main className="dashboard-page">
 
@@ -627,13 +545,11 @@ function Dashboard({
 
           </div>
 
-
           <div className="day-pill">
             DAY 12/60
           </div>
 
         </section>
-
 
         {/* STATS */}
 
@@ -653,18 +569,15 @@ function Dashboard({
 
             </div>
 
-
             <div className="big-number">
               12
               <small> days</small>
             </div>
 
-
             <p>
               You're on a roll!
               Keep your streak alive today.
             </p>
-
 
             <div className="progress-line">
 
@@ -677,7 +590,6 @@ function Dashboard({
             </div>
 
           </div>
-
 
           <div className="dashboard-card">
 
@@ -693,23 +605,19 @@ function Dashboard({
 
             </div>
 
-
             <div className="big-number">
               {percentage}%
             </div>
-
 
             <p>
               18 of 60 days completed
             </p>
 
-
             <div className="progress-line">
 
               <div
                 style={{
-                  width:
-                    `${percentage}%`,
+                  width: `${percentage}%`,
                 }}
               />
 
@@ -718,7 +626,6 @@ function Dashboard({
           </div>
 
         </section>
-
 
         {/* TODAY */}
 
@@ -732,7 +639,6 @@ function Dashboard({
                 TODAY'S TASK
               </div>
 
-
               <h2>
                 Day 12:{" "}
                 {today.title}
@@ -740,18 +646,15 @@ function Dashboard({
 
             </div>
 
-
             <span className="difficulty">
               {today.difficulty}
             </span>
 
           </div>
 
-
           <p className="today-description">
             {today.description}
           </p>
-
 
           <div className="task-tags">
 
@@ -769,7 +672,6 @@ function Dashboard({
 
           </div>
 
-
           <button
             className="primary-button"
             type="button"
@@ -782,8 +684,7 @@ function Dashboard({
 
         </section>
 
-
-        {/* PROFILE */}
+        {/* USER PROFILE LINKS */}
 
         <section className="profile-card">
 
@@ -791,17 +692,14 @@ function Dashboard({
             YOUR PROFILE LINKS
           </div>
 
-
           <h2>
             Connect your work
           </h2>
-
 
           <p>
             These links belong only to your
             logged-in account.
           </p>
-
 
           <div className="profile-form">
 
@@ -820,7 +718,6 @@ function Dashboard({
               }
             />
 
-
             <label>
               LinkedIn profile / post URL
             </label>
@@ -836,7 +733,6 @@ function Dashboard({
               }
             />
 
-
             <button
               className="primary-button"
               type="button"
@@ -845,17 +741,21 @@ function Dashboard({
               Save profile links →
             </button>
 
-
             {saved && (
               <div className="auth-success">
                 Profile links saved successfully.
               </div>
             )}
 
+            {saveError && (
+              <div className="auth-error">
+                {saveError}
+              </div>
+            )}
+
           </div>
 
         </section>
-
 
         {/* ACHIEVEMENTS */}
 
@@ -865,11 +765,9 @@ function Dashboard({
             ACHIEVEMENTS
           </div>
 
-
           <h2>
             Your wins
           </h2>
-
 
           <div className="achievement-grid">
 
@@ -884,7 +782,6 @@ function Dashboard({
                   <div className="achievement-icon">
                     {item.icon}
                   </div>
-
 
                   <div>
 
@@ -909,13 +806,11 @@ function Dashboard({
 
       </main>
 
-
       <Footer />
 
     </div>
   );
 }
-
 
 /* =========================================================
    CHALLENGE DAY
@@ -926,35 +821,25 @@ function ChallengeDay({
   user,
   logout,
 }) {
-
   const [githubUrl, setGithubUrl] =
     useState(
-      user.user_metadata?.github_url ||
-      DEFAULT_GITHUB
+      user.user_metadata?.github_url || ""
     );
-
 
   const [linkedinUrl, setLinkedinUrl] =
     useState(
-      user.user_metadata?.linkedin_url ||
-      DEFAULT_LINKEDIN
+      user.user_metadata?.linkedin_url || ""
     );
 
-
   useEffect(() => {
-
     setGithubUrl(
-      user.user_metadata?.github_url ||
-      DEFAULT_GITHUB
+      user.user_metadata?.github_url || ""
     );
 
     setLinkedinUrl(
-      user.user_metadata?.linkedin_url ||
-      DEFAULT_LINKEDIN
+      user.user_metadata?.linkedin_url || ""
     );
-
   }, [user]);
-
 
   return (
     <div className="app">
@@ -964,7 +849,6 @@ function ChallengeDay({
         user={user}
         logout={logout}
       />
-
 
       <main className="challenge-page">
 
@@ -978,7 +862,6 @@ function ChallengeDay({
           ← Back to dashboard
         </button>
 
-
         {/* HEADER */}
 
         <section className="challenge-header">
@@ -987,16 +870,13 @@ function ChallengeDay({
             DAY 12 / 60
           </div>
 
-
           <h1>
             {today.title}
           </h1>
 
-
           <p>
             {today.description}
           </p>
-
 
           <div className="challenge-tags">
 
@@ -1016,7 +896,6 @@ function ChallengeDay({
 
         </section>
 
-
         <section className="challenge-grid">
 
           <div className="challenge-main">
@@ -1029,11 +908,9 @@ function ChallengeDay({
                 YOUR MISSION
               </div>
 
-
               <h2>
                 Build today's challenge
               </h2>
-
 
               <p>
                 Create a clean and responsive
@@ -1043,11 +920,9 @@ function ChallengeDay({
                 they need to complete today.
               </p>
 
-
               <h3>
                 What you need to build
               </h3>
-
 
               <div className="check-list">
 
@@ -1076,7 +951,6 @@ function ChallengeDay({
 
             </div>
 
-
             {/* PROOF */}
 
             <div className="proof-section">
@@ -1085,11 +959,9 @@ function ChallengeDay({
                 SUBMIT YOUR PROOF
               </div>
 
-
               <h2>
                 Show what you built
               </h2>
-
 
               {/* GITHUB */}
 
@@ -1098,7 +970,6 @@ function ChallengeDay({
                 <div className="proof-icon">
                   GH
                 </div>
-
 
                 <div className="proof-info">
 
@@ -1113,21 +984,32 @@ function ChallengeDay({
 
                 </div>
 
+                {githubUrl ? (
 
-                <a
-                  className="outline-button"
-                  href={
-                    githubUrl ||
-                    DEFAULT_GITHUB
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Open GitHub →
-                </a>
+                  <a
+                    className="outline-button"
+                    href={githubUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Open GitHub →
+                  </a>
+
+                ) : (
+
+                  <button
+                    className="outline-button"
+                    type="button"
+                    onClick={() =>
+                      navigate("/dashboard")
+                    }
+                  >
+                    Add GitHub →
+                  </button>
+
+                )}
 
               </div>
-
 
               {/* LINKEDIN */}
 
@@ -1136,7 +1018,6 @@ function ChallengeDay({
                 <div className="proof-icon linkedin-icon">
                   in
                 </div>
-
 
                 <div className="proof-info">
 
@@ -1151,25 +1032,36 @@ function ChallengeDay({
 
                 </div>
 
+                {linkedinUrl ? (
 
-                <a
-                  className="outline-button"
-                  href={
-                    linkedinUrl ||
-                    DEFAULT_LINKEDIN
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Open LinkedIn →
-                </a>
+                  <a
+                    className="outline-button"
+                    href={linkedinUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Open LinkedIn →
+                  </a>
+
+                ) : (
+
+                  <button
+                    className="outline-button"
+                    type="button"
+                    onClick={() =>
+                      navigate("/dashboard")
+                    }
+                  >
+                    Add LinkedIn →
+                  </button>
+
+                )}
 
               </div>
 
             </div>
 
           </div>
-
 
           {/* SIDEBAR */}
 
@@ -1181,18 +1073,17 @@ function ChallengeDay({
                 YOUR PROGRESS
               </div>
 
-
               <div className="circle-progress">
+
                 <strong>
                   20%
                 </strong>
-              </div>
 
+              </div>
 
               <h3>
                 18 / 60 days
               </h3>
-
 
               <p>
                 You're building a strong
@@ -1201,18 +1092,15 @@ function ChallengeDay({
 
             </div>
 
-
             <div className="side-card">
 
               <div className="section-label">
                 CURRENT STREAK
               </div>
 
-
               <div className="side-streak">
                 🔥 12 days
               </div>
-
 
               <p>
                 Complete today's task
@@ -1227,16 +1115,14 @@ function ChallengeDay({
 
       </main>
 
-
       <Footer />
 
     </div>
   );
 }
 
-
 /* =========================================================
-   COMPONENTS
+   STAT COMPONENT
 ========================================================= */
 
 function Stat({
@@ -1244,7 +1130,6 @@ function Stat({
   number,
   label,
 }) {
-
   return (
     <div className="stat">
 
@@ -1264,20 +1149,21 @@ function Stat({
   );
 }
 
+/* =========================================================
+   FEATURE COMPONENT
+========================================================= */
 
 function Feature({
   icon,
   title,
   text,
 }) {
-
   return (
     <div className="feature-card">
 
       <div className="feature-icon">
         {icon}
       </div>
-
 
       <div>
 
@@ -1295,9 +1181,11 @@ function Feature({
   );
 }
 
+/* =========================================================
+   FOOTER
+========================================================= */
 
 function Footer() {
-
   return (
     <footer className="footer">
 
@@ -1312,6 +1200,5 @@ function Footer() {
     </footer>
   );
 }
-
 
 export default App;
