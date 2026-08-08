@@ -1,59 +1,90 @@
-import { useState } from 'react'
-import data from '../data/mockData.json'
+import React from "react";
 
-import Navbar from '../components/Navbar'
-import BottomNav from '../components/BottomNav'
+function ChallengeDay() {
 
-export default function ChallengeDay({ navigate }) {
+  const openGitHub = () => {
+    window.location.href =
+      "https://github.com/kishorevedhupillai/ABTalks-Vibe-Hackathon-MCBOYS";
+  };
 
-  const [submitted, setSubmitted] = useState(false)
-
-  const task = data.today
+  const openLinkedIn = () => {
+    window.location.href =
+      "https://www.linkedin.com/in/kishore-vedhupillai-jayaraman-074201339/";
+  };
 
   return (
-    <div className="app-shell">
+    <div className="page">
 
-      <Navbar
-        navigate={navigate}
-        active="challenge"
-      />
+      {/* NAVBAR */}
+      <header className="navbar">
 
+        <div className="brand">
+          AB<span>Talks</span>
+        </div>
+
+        <div className="nav-right">
+
+          <button
+            className="nav-link-button"
+            onClick={() => {
+              window.location.href = "/dashboard";
+            }}
+          >
+            Dashboard
+          </button>
+
+          <div className="profile-circle">
+            K
+          </div>
+
+        </div>
+
+      </header>
+
+
+      {/* MAIN */}
       <main className="challenge-page">
-
-        {/* BACK */}
 
         <button
           className="back-button"
-          onClick={() => navigate('/dashboard')}
+          onClick={() => {
+            window.location.href = "/dashboard";
+          }}
         >
           ← Back to dashboard
         </button>
 
 
-        {/* DAY HEADER */}
-
+        {/* HEADER */}
         <section className="challenge-header">
 
-          <span className="day-badge">
-            DAY 12
-          </span>
+          <div className="eyebrow">
+            DAY 12 / 60
+          </div>
 
           <h1>
-            {task.title}
+            Build a Smart Student
+            <br />
+            Dashboard
           </h1>
 
-          <p>
-            {task.description}
+          <p className="challenge-description">
+            Create a responsive dashboard that helps students
+            track their learning progress.
           </p>
 
-          <div className="challenge-meta">
+          <div className="challenge-tags">
 
-            <span>
-              ◷ {task.estimatedTime}
+            <span className="tag">
+              ⚡ Intermediate
             </span>
 
-            <span>
-              ● {task.difficulty}
+            <span className="tag">
+              ◷ 60 mins
+            </span>
+
+            <span className="tag">
+              💻 Web Development
             </span>
 
           </div>
@@ -61,141 +92,185 @@ export default function ChallengeDay({ navigate }) {
         </section>
 
 
-        {/* TASK */}
+        {/* CONTENT */}
+        <div className="challenge-grid">
 
-        <section className="challenge-card">
+          <section className="mission-card">
 
-          <div className="challenge-card-header">
-            <span className="section-label">
-              TODAY'S MISSION
-            </span>
+            <div className="eyebrow">
+              YOUR MISSION
+            </div>
 
-            <span className="mission-status">
-              {submitted ? 'SUBMITTED' : 'IN PROGRESS'}
-            </span>
+            <h2>
+              Build today's challenge
+            </h2>
+
+            <p>
+              Create a clean and responsive student dashboard.
+              The dashboard should help a student understand
+              their current progress and what they need to
+              complete today.
+            </p>
+
+            <h3>
+              What you need to build
+            </h3>
+
+            <div className="check-list">
+
+              <div className="check-item">
+                <span className="check">✓</span>
+                Create a responsive student dashboard
+              </div>
+
+              <div className="check-item">
+                <span className="check">✓</span>
+                Add progress tracking
+              </div>
+
+              <div className="check-item">
+                <span className="check">✓</span>
+                Show current streak
+              </div>
+
+              <div className="check-item">
+                <span className="check">✓</span>
+                Add today's challenge
+              </div>
+
+              <div className="check-item">
+                <span className="check">✓</span>
+                Create a mobile-first layout
+              </div>
+
+            </div>
+
+          </section>
+
+
+          {/* RIGHT */}
+          <aside className="side-column">
+
+            <div className="progress-card">
+
+              <div className="eyebrow">
+                YOUR PROGRESS
+              </div>
+
+              <div className="progress-circle">
+                <span>20%</span>
+              </div>
+
+              <h3>
+                18 / 60 days
+              </h3>
+
+              <p>
+                You're building a strong public learning record.
+              </p>
+
+            </div>
+
+
+            <div className="streak-card">
+
+              <div className="eyebrow">
+                CURRENT STREAK
+              </div>
+
+              <div className="streak-number">
+                🔥 12 days
+              </div>
+
+              <p>
+                Complete today's task to keep it alive.
+              </p>
+
+            </div>
+
+          </aside>
+
+        </div>
+
+
+        {/* SUBMIT PROOF */}
+        <section className="proof-card">
+
+          <div className="eyebrow">
+            SUBMIT YOUR PROOF
           </div>
 
           <h2>
-            Build a Student Progress Card
+            Show what you built
           </h2>
 
-          <p>
-            Create a responsive component that helps a student
-            understand their current coding journey at a glance.
-          </p>
 
+          {/* GITHUB */}
+          <div className="proof-row">
 
-          <div className="requirements">
+            <div className="proof-icon">
+              ⌘
+            </div>
 
-            <h3>
-              What to build
-            </h3>
+            <div className="proof-info">
 
-            <Requirement text="Show the student's current streak." />
-            <Requirement text="Display today's coding task." />
-            <Requirement text="Show overall challenge progress." />
-            <Requirement text="Include completed and remaining days." />
-            <Requirement text="Make the interface mobile-first." />
+              <h3>
+                GitHub repository
+              </h3>
+
+              <p>
+                Push your completed work to a public
+                GitHub repository.
+              </p>
+
+            </div>
+
+            <button
+              type="button"
+              className="outline-btn"
+              onClick={openGitHub}
+            >
+              Add GitHub →
+            </button>
 
           </div>
 
 
-          <div className="requirements">
+          {/* LINKEDIN */}
+          <div className="proof-row">
 
-            <h3>
-              Suggested skills
-            </h3>
-
-            <div className="skill-list">
-              {task.skills.map((skill) => (
-                <span key={skill}>
-                  {skill}
-                </span>
-              ))}
+            <div className="proof-icon">
+              in
             </div>
 
-          </div>
+            <div className="proof-info">
 
+              <h3>
+                LinkedIn post
+              </h3>
 
-          {/* PROOF */}
+              <p>
+                Share your progress and what you learned today.
+              </p>
 
-          <div className="proof-section">
-
-            <h3>
-              Submit your proof
-            </h3>
-
-            <p>
-              Add your GitHub repository and LinkedIn post
-              after completing the task.
-            </p>
-
-            <div className="proof-input">
-              <span>GitHub</span>
-              <input
-                placeholder="https://github.com/username/project"
-              />
             </div>
 
-            <div className="proof-input">
-              <span>LinkedIn</span>
-              <input
-                placeholder="https://linkedin.com/posts/..."
-              />
-            </div>
+            <button
+              type="button"
+              className="outline-btn"
+              onClick={openLinkedIn}
+            >
+              Add LinkedIn →
+            </button>
 
-          </div>
-
-
-          <button
-            className="primary-button full"
-            onClick={() => setSubmitted(true)}
-          >
-            {submitted
-              ? '✓ Proof submitted'
-              : 'Mark challenge complete'
-            }
-          </button>
-
-        </section>
-
-
-        {/* EDGE CASE */}
-
-        <section className="edge-card">
-
-          <span>💡</span>
-
-          <div>
-            <strong>
-              Missed yesterday?
-            </strong>
-
-            <p>
-              Don't worry. Your challenge continues.
-              Focus on today's task and rebuild your streak.
-            </p>
           </div>
 
         </section>
 
       </main>
 
-      <BottomNav
-        navigate={navigate}
-        active="challenge"
-      />
-
     </div>
-  )
+  );
 }
 
-
-function Requirement({ text }) {
-  return (
-    <div className="requirement">
-      <span>✓</span>
-      <p>{text}</p>
-    </div>
-  )
-}
+export default ChallengeDay;
