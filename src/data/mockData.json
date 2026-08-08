@@ -1,0 +1,40 @@
+import { useState } from 'react'
+
+import Landing from './pages/Landing'
+import Dashboard from './pages/Dashboard'
+import ChallengeDay from './pages/ChallengeDay'
+
+function getCurrentPath() {
+  const path = window.location.pathname
+
+  if (path === '/dashboard') return '/dashboard'
+  if (path === '/day/12') return '/day/12'
+
+  return '/'
+}
+
+export default function App() {
+  const [path, setPath] = useState(getCurrentPath())
+
+  function navigate(url) {
+    window.history.pushState({}, '', url)
+    setPath(url)
+    window.scrollTo(0, 0)
+  }
+
+  function handlePopState() {
+    setPath(getCurrentPath())
+  }
+
+  window.onpopstate = handlePopState
+
+  if (path === '/dashboard') {
+    return <Dashboard navigate={navigate} />
+  }
+
+  if (path === '/day/12') {
+    return <ChallengeDay navigate={navigate} />
+  }
+
+  return <Landing navigate={navigate} />
+}
