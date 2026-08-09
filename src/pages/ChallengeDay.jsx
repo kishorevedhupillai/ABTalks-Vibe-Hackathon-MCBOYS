@@ -1,276 +1,815 @@
-import React from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabaseClient";
 
-function ChallengeDay() {
+const TOTAL_DAYS = 60;
+const COMPLETED_DAYS = 18;
+const CURRENT_STREAK = 12;
 
-  const openGitHub = () => {
-    window.location.href =
-      "https://github.com/kishorevedhupillai/ABTalks-Vibe-Hackathon-MCBOYS";
-  };
+const today = {
+  day: 12,
+  title: "Build a Smart Student Dashboard",
+  description:
+    "Create a clean and responsive student dashboard that helps students track their learning progress.",
+  difficulty: "Intermediate",
+  time: "60 mins",
+  category: "Web Development",
+};
 
-  const openLinkedIn = () => {
-    window.location.href =
-      "https://www.linkedin.com/in/kishore-vedhupillai-jayaraman-074201339/";
-  };
+const tasks = [
+  "Create a responsive student dashboard",
+  "Add progress tracking",
+  "Show current streak",
+  "Add today's challenge",
+  "Create a mobile-first layout",
+];
+
+const problemStatement = {
+  title: "Build a Smart Student Dashboard",
+  description:
+    "Students often struggle to understand their learning progress because their tasks, streaks, goals, and completed work are scattered across different platforms. Build a clean and responsive dashboard that brings all important learning information into one place.",
+  requirements: [
+    "Display the student's current learning streak",
+    "Display overall completion percentage",
+    "Show today's coding challenge",
+    "Show completed challenge days",
+    "Provide a mobile-first responsive interface",
+    "Allow students to connect their GitHub and LinkedIn work",
+  ],
+};
+
+function calculatePercentage(days) {
+  return Math.round((days / TOTAL_DAYS) * 100);
+}
+
+function cleanUrl(value) {
+  if (!value) return "";
+
+  const trimmed = value.trim();
+
+  if (!trimmed) return "";
+
+  const finalUrl = /^https?:\/\//i.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
+
+  try {
+    const parsed = new URL(finalUrl);
+
+    if (
+      parsed.protocol !== "http:" &&
+      parsed.protocol !== "https:"
+    ) {
+      return "";
+    }
+
+    return parsed.href;
+  } catch {
+    return "";
+  }
+}
+
+export default function ChallengeDay({
+  navigate,
+  user,
+  logout,
+}) {
+  const [githubUrl, setGithubUrl] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
+
+  /*
+   * IMPORTANT
+   *
+   * 18 / 60 = 30%
+   */
+  const progressPercentage =
+    calculatePercentage(COMPLETED_DAYS);
+
+  /*
+   * 12 / 60 = 20%
+   */
+  const streakPercentage =
+    calculatePercentage(CURRENT_STREAK);
+
+  /*
+   * Get logged-in user's saved links.
+   */
+  useEffect(() => {
+    let active = true;
+
+    async function loadUserLinks() {
+      try {
+        setLoading(true);
+
+        /*
+         * First try the user passed from App.
+         */
+        const metadata =
+          user?.user_metadata || {};
+
+        if (active) {
+          setGithubUrl(
+            metadata.github_url || ""
+          );
+
+          setLinkedinUrl(
+            metadata.linkedin_url || ""
+          );
+        }
+
+        /*
+         * Then get the latest user from Supabase.
+         */
+        const {
+          data,
+          error,
+        } = await supabase.auth.getUser();
+
+        if (
+          !error &&
+          data?.user &&
+          active
+        ) {
+          setGithubUrl(
+            data.user.user_metadata
+              ?.github_url || ""
+          );
+
+          setLinkedinUrl(
+            data.user.user_metadata
+              ?.linkedin_url || ""
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Error loading profile links:",
+          error
+        );
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadUserLinks();
+
+    return () => {
+      active = false;
+    };
+  }, [user]);
+
+  /*
+   * Save GitHub and LinkedIn links
+   * to the currently logged-in user.
+   */
+  async function saveLinks() {
+    setMessage("");
+    setMessageType("");
+
+    const github = cleanUrl(githubUrl);
+    const linkedin = cleanUrl(linkedinUrl);
+
+    if (githubUrl && !github) {
+      setMessage(
+        "Please enter a valid GitHub URL."
+      );
+      setMessageType("error");
+      return;
+    }
+
+    if (linkedinUrl && !linkedin) {
+      setMessage(
+        "Please enter a valid LinkedIn URL."
+      );
+      setMessageType("error");
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      const {
+        data,
+        error,
+      } = await supabase.auth.updateUser({
+        data: {
+          github_url: github,
+          linkedin_url: linkedin,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setGithubUrl(
+        data?.user?.user_metadata
+          ?.github_url || github
+      );
+
+      setLinkedinUrl(
+        data?.user?.user_metadata
+          ?.linkedin_url || linkedin
+      );
+
+      setMessage(
+        "Your GitHub and LinkedIn links were saved successfully."
+      );
+
+      setMessageType("success");
+    } catch (error) {
+      console.error(
+        "Error saving links:",
+        error
+      );
+
+      setMessage(
+        "Unable to save your links. Please try again."
+      );
+
+      setMessageType("error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  /*
+   * Open GitHub only when this user
+   * actually has a GitHub URL.
+   */
+  function handleGithub() {
+    const url = cleanUrl(githubUrl);
+
+    if (!url) {
+      setMessage(
+        "No GitHub link added. Add your GitHub link from Dashboard."
+      );
+
+      setMessageType("error");
+
+      navigate("/dashboard");
+      return;
+    }
+
+    window.open(
+      url,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  }
+
+  /*
+   * Open LinkedIn only when this user
+   * actually has a LinkedIn URL.
+   */
+  function handleLinkedin() {
+    const url = cleanUrl(linkedinUrl);
+
+    if (!url) {
+      setMessage(
+        "No LinkedIn link added. Add your LinkedIn link from Dashboard."
+      );
+
+      setMessageType("error");
+
+      navigate("/dashboard");
+      return;
+    }
+
+    window.open(
+      url,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  }
 
   return (
-    <div className="page">
+    <div className="app">
 
-      {/* NAVBAR */}
+      {/* ==========================================
+          NAVBAR
+      ========================================== */}
+
       <header className="navbar">
 
-        <div className="brand">
+        <button
+          className="logo"
+          type="button"
+          onClick={() => navigate("/")}
+        >
           AB<span>Talks</span>
-        </div>
+        </button>
 
         <div className="nav-right">
 
           <button
-            className="nav-link-button"
-            onClick={() => {
-              window.location.href = "/dashboard";
-            }}
+            className="nav-dashboard"
+            type="button"
+            onClick={() =>
+              navigate("/dashboard")
+            }
           >
             Dashboard
           </button>
 
-          <div className="profile-circle">
-            K
-          </div>
+          <button
+            className="logout-button"
+            type="button"
+            onClick={logout}
+          >
+            Logout
+          </button>
+
+          <button
+            className="profile-button"
+            type="button"
+            onClick={() =>
+              navigate("/dashboard")
+            }
+          >
+            {(
+              user?.user_metadata?.name ||
+              user?.email ||
+              "U"
+            )
+              .charAt(0)
+              .toUpperCase()}
+          </button>
 
         </div>
-
       </header>
 
+      {/* ==========================================
+          PAGE
+      ========================================== */}
 
-      {/* MAIN */}
       <main className="challenge-page">
 
         <button
           className="back-button"
-          onClick={() => {
-            window.location.href = "/dashboard";
-          }}
+          type="button"
+          onClick={() =>
+            navigate("/dashboard")
+          }
         >
           ← Back to dashboard
         </button>
 
+        {/* ========================================
+            CHALLENGE HEADER
+        ======================================== */}
 
-        {/* HEADER */}
-        <section className="challenge-header">
+        <section className="challenge-hero">
 
-          <div className="eyebrow">
-            DAY 12 / 60
+          <div className="day-label">
+            DAY {today.day} / {TOTAL_DAYS}
           </div>
 
           <h1>
-            Build a Smart Student
-            <br />
-            Dashboard
+            {today.title}
           </h1>
 
-          <p className="challenge-description">
-            Create a responsive dashboard that helps students
-            track their learning progress.
+          <p>
+            {today.description}
           </p>
 
-          <div className="challenge-tags">
+          <div className="challenge-meta">
 
-            <span className="tag">
-              ⚡ Intermediate
+            <span>
+              ⚡ {today.difficulty}
             </span>
 
-            <span className="tag">
-              ◷ 60 mins
+            <span>
+              ◷ {today.time}
             </span>
 
-            <span className="tag">
-              💻 Web Development
+            <span>
+              💻 {today.category}
             </span>
 
           </div>
 
         </section>
 
+        {/* ========================================
+            MAIN CONTENT
+        ======================================== */}
 
-        {/* CONTENT */}
-        <div className="challenge-grid">
+        <section className="challenge-content">
 
-          <section className="mission-card">
+          {/* ======================================
+              LEFT SIDE
+          ====================================== */}
 
-            <div className="eyebrow">
-              YOUR MISSION
-            </div>
+          <div>
 
-            <h2>
-              Build today's challenge
-            </h2>
+            {/* PROBLEM STATEMENT */}
 
-            <p>
-              Create a clean and responsive student dashboard.
-              The dashboard should help a student understand
-              their current progress and what they need to
-              complete today.
-            </p>
+            <section className="content-card">
 
-            <h3>
-              What you need to build
-            </h3>
-
-            <div className="check-list">
-
-              <div className="check-item">
-                <span className="check">✓</span>
-                Create a responsive student dashboard
+              <div className="section-label">
+                PROBLEM STATEMENT
               </div>
 
-              <div className="check-item">
-                <span className="check">✓</span>
-                Add progress tracking
+              <h2>
+                {problemStatement.title}
+              </h2>
+
+              <p>
+                {problemStatement.description}
+              </p>
+
+              <h3>
+                What you need to build
+              </h3>
+
+              <div className="check-list">
+
+                {problemStatement.requirements.map(
+                  (item, index) => (
+                    <div
+                      className="check-item"
+                      key={index}
+                    >
+
+                      <span>
+                        ✓
+                      </span>
+
+                      <span>
+                        {item}
+                      </span>
+
+                    </div>
+                  )
+                )}
+
               </div>
 
-              <div className="check-item">
-                <span className="check">✓</span>
-                Show current streak
+            </section>
+
+            {/* TODAY'S MISSION */}
+
+            <section className="content-card">
+
+              <div className="section-label">
+                TODAY'S MISSION
               </div>
 
-              <div className="check-item">
-                <span className="check">✓</span>
-                Add today's challenge
+              <h2>
+                Build today's challenge
+              </h2>
+
+              <p>
+                Build a clean and responsive
+                student dashboard that allows
+                students to understand their
+                current progress, track their
+                streak and complete today's
+                learning goal.
+              </p>
+
+              <h3>
+                Required features
+              </h3>
+
+              <div className="check-list">
+
+                {tasks.map(
+                  (task, index) => (
+                    <div
+                      className="check-item"
+                      key={index}
+                    >
+
+                      <span>
+                        ✓
+                      </span>
+
+                      <span>
+                        {task}
+                      </span>
+
+                    </div>
+                  )
+                )}
+
               </div>
 
-              <div className="check-item">
-                <span className="check">✓</span>
-                Create a mobile-first layout
+            </section>
+
+            {/* ==================================
+                PROOF
+            ================================== */}
+
+            <section className="content-card">
+
+              <div className="section-label">
+                SUBMIT YOUR PROOF
               </div>
 
-            </div>
+              <h2>
+                Show what you built
+              </h2>
 
-          </section>
+              <p>
+                Connect your own GitHub
+                repository and LinkedIn
+                profile or post. These links
+                belong only to your logged-in
+                account.
+              </p>
 
+              {/* GITHUB */}
 
-          {/* RIGHT */}
-          <aside className="side-column">
+              <div className="proof-box">
 
-            <div className="progress-card">
+                <div className="proof-icon">
+                  GH
+                </div>
 
-              <div className="eyebrow">
+                <div className="proof-info">
+
+                  <strong>
+                    GitHub repository
+                  </strong>
+
+                  <p>
+                    Open your own GitHub
+                    profile or repository.
+                  </p>
+
+                </div>
+
+                {loading ? (
+
+                  <button
+                    className="outline-btn"
+                    type="button"
+                    disabled
+                  >
+                    Loading...
+                  </button>
+
+                ) : githubUrl ? (
+
+                  <button
+                    className="outline-btn"
+                    type="button"
+                    onClick={handleGithub}
+                  >
+                    Open GitHub →
+                  </button>
+
+                ) : (
+
+                  <button
+                    className="outline-btn"
+                    type="button"
+                    onClick={() =>
+                      navigate("/dashboard")
+                    }
+                  >
+                    Add GitHub →
+                  </button>
+
+                )}
+
+              </div>
+
+              {/* LINKEDIN */}
+
+              <div className="proof-box">
+
+                <div className="proof-icon">
+                  in
+                </div>
+
+                <div className="proof-info">
+
+                  <strong>
+                    LinkedIn post
+                  </strong>
+
+                  <p>
+                    Open your own LinkedIn
+                    profile or post.
+                  </p>
+
+                </div>
+
+                {loading ? (
+
+                  <button
+                    className="outline-btn"
+                    type="button"
+                    disabled
+                  >
+                    Loading...
+                  </button>
+
+                ) : linkedinUrl ? (
+
+                  <button
+                    className="outline-btn"
+                    type="button"
+                    onClick={handleLinkedin}
+                  >
+                    Open LinkedIn →
+                  </button>
+
+                ) : (
+
+                  <button
+                    className="outline-btn"
+                    type="button"
+                    onClick={() =>
+                      navigate("/dashboard")
+                    }
+                  >
+                    Add LinkedIn →
+                  </button>
+
+                )}
+
+              </div>
+
+              {/* MESSAGE */}
+
+              {message && (
+                <div
+                  style={{
+                    marginTop: "14px",
+                    padding: "11px 13px",
+                    borderRadius: "7px",
+                    background:
+                      messageType === "success"
+                        ? "#0d2418"
+                        : "#281016",
+                    color:
+                      messageType === "success"
+                        ? "#5ee38a"
+                        : "#ff7288",
+                    fontSize: "10px",
+                  }}
+                >
+                  {message}
+                </div>
+              )}
+
+              {/* SAVE */}
+
+              <button
+                className="primary-button"
+                type="button"
+                onClick={saveLinks}
+                disabled={saving}
+              >
+                {saving
+                  ? "Saving..."
+                  : "Save my links →"}
+              </button>
+
+            </section>
+
+          </div>
+
+          {/* ======================================
+              RIGHT SIDEBAR
+          ====================================== */}
+
+          <aside className="challenge-sidebar">
+
+            {/* ====================================
+                OVERALL PROGRESS
+            ==================================== */}
+
+            <div className="side-card">
+
+              <div className="section-label">
                 YOUR PROGRESS
               </div>
 
-              <div className="progress-circle">
-                <span>20%</span>
+              <div
+                className="circle-progress"
+                style={{
+                  background: `conic-gradient(
+                    #8b5cf6 ${progressPercentage * 3.6}deg,
+                    #211b2b ${progressPercentage * 3.6}deg
+                  )`,
+                }}
+              >
+
+                <strong>
+                  {progressPercentage}%
+                </strong>
+
               </div>
 
               <h3>
-                18 / 60 days
+                {COMPLETED_DAYS} / {TOTAL_DAYS} days
               </h3>
 
               <p>
-                You're building a strong public learning record.
+                You're building a strong
+                public learning record.
               </p>
+
+              <div className="progress-line">
+
+                <div
+                  style={{
+                    width:
+                      `${progressPercentage}%`,
+                  }}
+                />
+
+              </div>
 
             </div>
 
+            {/* ====================================
+                CURRENT STREAK
+            ==================================== */}
 
-            <div className="streak-card">
+            <div className="side-card">
 
-              <div className="eyebrow">
+              <div className="section-label">
                 CURRENT STREAK
               </div>
 
-              <div className="streak-number">
-                🔥 12 days
+              <div className="side-streak">
+                🔥 {CURRENT_STREAK} days
               </div>
 
               <p>
-                Complete today's task to keep it alive.
+                Complete today's task
+                to keep it alive.
+              </p>
+
+              <div className="progress-line">
+
+                <div
+                  style={{
+                    width:
+                      `${streakPercentage}%`,
+                  }}
+                />
+
+              </div>
+
+            </div>
+
+            {/* ====================================
+                DAY INFORMATION
+            ==================================== */}
+
+            <div className="side-card">
+
+              <div className="section-label">
+                TODAY
+              </div>
+
+              <h3>
+                Day {today.day}
+              </h3>
+
+              <p>
+                Keep building every day.
+                Your consistency becomes
+                your portfolio.
               </p>
 
             </div>
 
           </aside>
 
-        </div>
-
-
-        {/* SUBMIT PROOF */}
-        <section className="proof-card">
-
-          <div className="eyebrow">
-            SUBMIT YOUR PROOF
-          </div>
-
-          <h2>
-            Show what you built
-          </h2>
-
-
-          {/* GITHUB */}
-          <div className="proof-row">
-
-            <div className="proof-icon">
-              ⌘
-            </div>
-
-            <div className="proof-info">
-
-              <h3>
-                GitHub repository
-              </h3>
-
-              <p>
-                Push your completed work to a public
-                GitHub repository.
-              </p>
-
-            </div>
-
-            <button
-              type="button"
-              className="outline-btn"
-              onClick={openGitHub}
-            >
-              Add GitHub →
-            </button>
-
-          </div>
-
-
-          {/* LINKEDIN */}
-          <div className="proof-row">
-
-            <div className="proof-icon">
-              in
-            </div>
-
-            <div className="proof-info">
-
-              <h3>
-                LinkedIn post
-              </h3>
-
-              <p>
-                Share your progress and what you learned today.
-              </p>
-
-            </div>
-
-            <button
-              type="button"
-              className="outline-btn"
-              onClick={openLinkedIn}
-            >
-              Add LinkedIn →
-            </button>
-
-          </div>
-
         </section>
 
       </main>
 
+      {/* ==========================================
+          FOOTER
+      ========================================== */}
+
+      <footer>
+
+        <strong>
+          AB<span>Talks</span>
+        </strong>
+
+        <small>
+          60-Day Coding Challenge
+        </small>
+
+      </footer>
+
     </div>
   );
 }
-
-export default ChallengeDay;

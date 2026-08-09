@@ -1,58 +1,129 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 
-function Dashboard() {
-  const navigate = useNavigate();
+export default function Dashboard({
+  navigate,
+  user,
+  onLogout
+}) {
 
-  const [showGithub, setShowGithub] = useState(false);
-  const [showLinkedin, setShowLinkedin] = useState(false);
+  const currentUser = user || {
+    name: "Student",
+    email: ""
+  };
 
-  const currentDay = 12;
-  const totalDays = 60;
-  const completedDays = 18;
-  const streak = 12;
+  const [github, setGithub] = useState(
+    currentUser.github || ""
+  );
 
-  const completion = Math.round((completedDays / totalDays) * 100);
+  const [linkedin, setLinkedin] = useState(
+    currentUser.linkedin || ""
+  );
+
+  const [saved, setSaved] = useState(false);
+
+
+  const saveProfileLinks = () => {
+
+    const updatedUser = {
+      ...currentUser,
+      github,
+      linkedin
+    };
+
+    localStorage.setItem(
+      "abtalks_user",
+      JSON.stringify(updatedUser)
+    );
+
+    setSaved(true);
+
+    setTimeout(() => {
+      setSaved(false);
+    }, 2500);
+  };
+
+
+  const openExternal = (url) => {
+
+    if (!url) return;
+
+    let finalUrl = url.trim();
+
+    if (!finalUrl.startsWith("http")) {
+      finalUrl = "https://" + finalUrl;
+    }
+
+    window.open(
+      finalUrl,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
+
 
   return (
-    <div className="dashboard-page">
+    <div className="app-shell">
 
       {/* NAVBAR */}
-      <header className="dashboard-navbar">
-        <div className="logo">
+      <nav className="top-navbar">
+
+        <button
+          className="logo"
+          onClick={() => navigate("/")}
+        >
           AB<span>Talks</span>
-        </div>
+        </button>
 
         <div className="nav-right">
-          <button onClick={() => navigate("/dashboard")}>
+
+          <button
+            className="nav-dashboard"
+          >
             Dashboard
           </button>
 
-          <div className="avatar">K</div>
+          <button
+            className="nav-login"
+            onClick={onLogout}
+          >
+            Logout
+          </button>
+
+          <div className="avatar">
+            {currentUser.name
+              ?.charAt(0)
+              ?.toUpperCase()}
+          </div>
+
         </div>
-      </header>
+
+      </nav>
 
 
-      {/* HERO */}
       <main className="dashboard-container">
 
-        <section className="dashboard-hero">
+        {/* INTRO */}
+        <section className="dashboard-intro">
 
           <div>
-            <p className="eyebrow">STUDENT DASHBOARD</p>
+
+            <span className="small-label">
+              STUDENT DASHBOARD
+            </span>
 
             <h1>
-              Hey Kishore 👋
+              Hey {currentUser.name || "Student"} 👋
             </h1>
 
-            <p className="hero-description">
+            <p>
               Keep building. Your consistency is your advantage.
             </p>
+
           </div>
 
-          <div className="day-badge">
-            DAY {currentDay}/60
-          </div>
+          <span className="day-counter">
+            DAY 12 / 60
+          </span>
 
         </section>
 
@@ -62,25 +133,26 @@ function Dashboard() {
 
           <div className="stat-card">
 
-            <div className="stat-top">
-              <span>Current streak</span>
-              <span>🔥</span>
+            <div className="stat-title">
+              <span>
+                Current streak
+              </span>
+
+              <span>
+                🔥
+              </span>
             </div>
 
-            <h2>
-              {streak}
-              <small> days</small>
-            </h2>
+            <strong>
+              12 <small>days</small>
+            </strong>
 
             <p>
-              You're on a roll! Keep your streak alive today.
+              You're on a roll. Keep your streak alive today!
             </p>
 
             <div className="progress-bar">
-              <div
-                className="progress-fill"
-                style={{ width: `${(streak / 30) * 100}%` }}
-              />
+              <div style={{ width: "60%" }} />
             </div>
 
           </div>
@@ -88,24 +160,26 @@ function Dashboard() {
 
           <div className="stat-card">
 
-            <div className="stat-top">
-              <span>Overall completion</span>
-              <span>📈</span>
+            <div className="stat-title">
+              <span>
+                Overall completion
+              </span>
+
+              <span>
+                📊
+              </span>
             </div>
 
-            <h2>
-              {completion}%
-            </h2>
+            <strong>
+              30%
+            </strong>
 
             <p>
-              {completedDays} of {totalDays} days completed
+              18 of 60 days completed.
             </p>
 
             <div className="progress-bar">
-              <div
-                className="progress-fill"
-                style={{ width: `${completion}%` }}
-              />
+              <div style={{ width: "30%" }} />
             </div>
 
           </div>
@@ -114,36 +188,55 @@ function Dashboard() {
 
 
         {/* TODAY'S TASK */}
-        <section className="task-card">
+        <section className="today-card">
 
-          <div className="task-header">
+          <div className="today-top">
 
             <div>
-              <p className="eyebrow">
+
+              <span className="day-label">
                 TODAY'S TASK
-              </p>
+              </span>
 
               <h2>
                 Day 12: Build a Smart Student Dashboard
               </h2>
 
-              <p>
-                Create a responsive dashboard that helps students
-                track their learning progress.
-              </p>
             </div>
 
-            <div className="difficulty">
+            <span className="difficulty">
               Intermediate
-            </div>
+            </span>
 
           </div>
 
 
-          <div className="task-tags">
-            <span>⏱ 60 mins</span>
-            <span>💻 Coding</span>
-            <span>🎯 Skill building</span>
+          <p>
+            Create a clean and responsive student dashboard
+            that helps students understand their learning
+            progress, current streak, today's task and overall
+            completion.
+          </p>
+
+
+          <div className="tags">
+
+            <span>
+              ⏱ 60 mins
+            </span>
+
+            <span>
+              💻 Coding
+            </span>
+
+            <span>
+              🎨 UI/UX
+            </span>
+
+            <span>
+              ⚛ React
+            </span>
+
           </div>
 
 
@@ -157,138 +250,173 @@ function Dashboard() {
         </section>
 
 
-        {/* ACHIEVEMENTS */}
-        <section className="achievements">
+        {/* PROFILE LINKS */}
+        <section className="section-block">
 
-          <p className="eyebrow">
-            ACHIEVEMENTS
+          <div className="section-title">
+
+            <span className="small-label">
+              YOUR PROFILE LINKS
+            </span>
+
+            <h2>
+              Connect your work
+            </h2>
+
+          </div>
+
+          <p className="profile-description">
+            These links belong only to your logged-in account.
+            Add your own profiles so recruiters can find your work.
           </p>
 
-          <h2>
-            Your wins
-          </h2>
+
+          <div className="profile-card">
+
+            <label>
+              GitHub profile / repository URL
+            </label>
+
+            <input
+              type="url"
+              placeholder="https://github.com/yourusername"
+              value={github}
+              onChange={(e) =>
+                setGithub(e.target.value)
+              }
+            />
+
+
+            <label>
+              LinkedIn profile / post URL
+            </label>
+
+            <input
+              type="url"
+              placeholder="https://linkedin.com/in/yourusername"
+              value={linkedin}
+              onChange={(e) =>
+                setLinkedin(e.target.value)
+              }
+            />
+
+
+            <button
+              className="primary-button"
+              onClick={saveProfileLinks}
+            >
+              Save profile links →
+            </button>
+
+
+            {saved && (
+              <div className="profile-message">
+                ✓ Profile links saved successfully.
+              </div>
+            )}
+
+          </div>
+
+        </section>
+
+
+        {/* QUICK LINKS */}
+        <section className="section-block">
+
+          <div className="section-title">
+
+            <span className="small-label">
+              YOUR WORK
+            </span>
+
+            <h2>
+              Open your profiles
+            </h2>
+
+          </div>
+
+
+          <div className="action-grid">
+
+            <button
+              className="action-card"
+              onClick={() => openExternal(github)}
+            >
+
+              <span>
+                GH
+              </span>
+
+              <strong>
+                GitHub
+              </strong>
+
+              <small>
+                Open your GitHub profile or repository.
+              </small>
+
+            </button>
+
+
+            <button
+              className="action-card"
+              onClick={() => openExternal(linkedin)}
+            >
+
+              <span>
+                in
+              </span>
+
+              <strong>
+                LinkedIn
+              </strong>
+
+              <small>
+                Open your LinkedIn profile or post.
+              </small>
+
+            </button>
+
+          </div>
+
+        </section>
+
+
+        {/* ACHIEVEMENTS */}
+        <section className="section-block">
+
+          <div className="section-title">
+
+            <span className="small-label">
+              ACHIEVEMENTS
+            </span>
+
+            <h2>
+              Your wins
+            </h2>
+
+          </div>
+
 
           <div className="achievement-grid">
 
             <div className="achievement-card">
-              <span className="achievement-icon">🔥</span>
-
-              <div>
-                <strong>7 Day Streak</strong>
-                <p>
-                  Built consistently for one week
-                </p>
-              </div>
+              <span>🔥</span>
+              <strong>7 Day Streak</strong>
+              <small>Built consistency for a week.</small>
             </div>
-
 
             <div className="achievement-card">
-              <span className="achievement-icon">⚡</span>
-
-              <div>
-                <strong>Fast Builder</strong>
-                <p>
-                  Completed 5 tasks ahead of time
-                </p>
-              </div>
+              <span>⚡</span>
+              <strong>Fast Builder</strong>
+              <small>Completed multiple challenges.</small>
             </div>
-
 
             <div className="achievement-card">
-              <span className="achievement-icon">🏆</span>
-
-              <div>
-                <strong>Consistency</strong>
-                <p>
-                  Completed 18 challenge days
-                </p>
-              </div>
+              <span>🏆</span>
+              <strong>Consistency</strong>
+              <small>Completed 12 challenge days.</small>
             </div>
-
-          </div>
-
-        </section>
-
-
-        {/* STUDENT RANK */}
-        <section className="rank-card">
-
-          <div>
-
-            <p className="eyebrow">
-              STUDENT STANDING
-            </p>
-
-            <h2>
-              You're ranked #24
-            </h2>
-
-            <p>
-              Keep completing daily challenges to climb higher.
-            </p>
-
-          </div>
-
-          <div className="rank-trophy">
-            🏆
-          </div>
-
-        </section>
-
-
-        {/* PROOF SECTION */}
-        <section className="proof-card">
-
-          <p className="eyebrow">
-            SUBMIT YOUR PROOF
-          </p>
-
-          <h2>
-            Show what you built
-          </h2>
-
-          <div className="proof-item">
-
-            <div className="proof-icon">
-              GH
-            </div>
-
-            <div className="proof-content">
-              <strong>GitHub repository</strong>
-              <p>
-                Push your completed work to a public GitHub repository.
-              </p>
-            </div>
-
-            <button
-              className="secondary-button"
-              onClick={() => setShowGithub(true)}
-            >
-              Add GitHub →
-            </button>
-
-          </div>
-
-
-          <div className="proof-item">
-
-            <div className="proof-icon">
-              in
-            </div>
-
-            <div className="proof-content">
-              <strong>LinkedIn post</strong>
-              <p>
-                Share your progress and what you learned today.
-              </p>
-            </div>
-
-            <button
-              className="secondary-button"
-              onClick={() => setShowLinkedin(true)}
-            >
-              Add LinkedIn →
-            </button>
 
           </div>
 
@@ -297,99 +425,18 @@ function Dashboard() {
       </main>
 
 
-      {/* GITHUB MODAL */}
-      {showGithub && (
-        <div
-          className="modal-overlay"
-          onClick={() => setShowGithub(false)}
-        >
+      <footer className="site-footer">
 
-          <div
-            className="modal"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <strong>
+          AB<span>Talks</span>
+        </strong>
 
-            <button
-              className="modal-close"
-              onClick={() => setShowGithub(false)}
-            >
-              ×
-            </button>
+        <small>
+          60-Day Coding Challenge
+        </small>
 
-            <div className="modal-icon">
-              GH
-            </div>
-
-            <h2>
-              Add GitHub proof
-            </h2>
-
-            <p>
-              Paste the public repository or commit URL for today's work.
-            </p>
-
-            <input
-              type="url"
-              placeholder="https://github.com/username/repository"
-            />
-
-            <button className="primary-button">
-              Save GitHub proof
-            </button>
-
-          </div>
-
-        </div>
-      )}
-
-
-      {/* LINKEDIN MODAL */}
-      {showLinkedin && (
-        <div
-          className="modal-overlay"
-          onClick={() => setShowLinkedin(false)}
-        >
-
-          <div
-            className="modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-
-            <button
-              className="modal-close"
-              onClick={() => setShowLinkedin(false)}
-            >
-              ×
-            </button>
-
-            <div className="modal-icon">
-              in
-            </div>
-
-            <h2>
-              Add LinkedIn proof
-            </h2>
-
-            <p>
-              Paste the LinkedIn post URL where you shared today's progress.
-            </p>
-
-            <input
-              type="url"
-              placeholder="https://linkedin.com/posts/..."
-            />
-
-            <button className="primary-button">
-              Save LinkedIn proof
-            </button>
-
-          </div>
-
-        </div>
-      )}
+      </footer>
 
     </div>
   );
 }
-
-export default Dashboard;

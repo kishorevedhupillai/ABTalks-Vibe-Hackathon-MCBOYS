@@ -5,7 +5,7 @@ import Login from "./pages/Login.jsx";
 import Signup from "./pages/Signup.jsx";
 
 /* =========================================================
-   DATA
+   CHALLENGE DATA
 ========================================================= */
 
 const today = {
@@ -52,33 +52,47 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  /* -------------------------------------------------------
-     AUTH CHECK
-  ------------------------------------------------------- */
-
   useEffect(() => {
-    const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    let mounted = true;
 
-      setUser(user);
-      setLoading(false);
+    const loadUser = async () => {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (mounted) {
+          setUser(user);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Auth error:", error);
+
+        if (mounted) {
+          setUser(null);
+          setLoading(false);
+        }
+      }
     };
 
-    getUser();
+    loadUser();
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setUser(session?.user ?? null);
+        if (mounted) {
+          setUser(session?.user || null);
+        }
       }
     );
 
     const handlePopState = () => {
       setPath(window.location.pathname);
-      window.scrollTo(0, 0);
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
     };
 
     window.addEventListener(
@@ -87,6 +101,8 @@ function App() {
     );
 
     return () => {
+      mounted = false;
+
       subscription.unsubscribe();
 
       window.removeEventListener(
@@ -96,31 +112,40 @@ function App() {
     };
   }, []);
 
-  /* -------------------------------------------------------
+  /* =======================================================
      NAVIGATION
-  ------------------------------------------------------- */
+  ======================================================= */
 
   const navigate = (url) => {
     window.history.pushState({}, "", url);
 
     setPath(url);
 
-    window.scrollTo(0, 0);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
-  /* -------------------------------------------------------
+  /* =======================================================
      LOGOUT
-  ------------------------------------------------------- */
+  ======================================================= */
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
 
-    navigate("/login");
+      setUser(null);
+
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
-  /* -------------------------------------------------------
+  /* =======================================================
      LOADING
-  ------------------------------------------------------- */
+  ======================================================= */
 
   if (loading) {
     return (
@@ -129,30 +154,30 @@ function App() {
           AB<span>Talks</span>
         </div>
 
-        <p>Loading...</p>
+        <p>Loading your workspace...</p>
       </div>
     );
   }
 
-  /* -------------------------------------------------------
+  /* =======================================================
      LOGIN
-  ------------------------------------------------------- */
+  ======================================================= */
 
   if (path === "/login") {
     return <Login navigate={navigate} />;
   }
 
-  /* -------------------------------------------------------
+  /* =======================================================
      SIGNUP
-  ------------------------------------------------------- */
+  ======================================================= */
 
   if (path === "/signup") {
     return <Signup navigate={navigate} />;
   }
 
-  /* -------------------------------------------------------
+  /* =======================================================
      DASHBOARD
-  ------------------------------------------------------- */
+  ======================================================= */
 
   if (path === "/dashboard") {
     if (!user) {
@@ -169,9 +194,9 @@ function App() {
     );
   }
 
-  /* -------------------------------------------------------
-     CHALLENGE
-  ------------------------------------------------------- */
+  /* =======================================================
+     DAY 12
+  ======================================================= */
 
   if (path === "/day/12") {
     if (!user) {
@@ -188,9 +213,9 @@ function App() {
     );
   }
 
-  /* -------------------------------------------------------
+  /* =======================================================
      LANDING
-  ------------------------------------------------------- */
+  ======================================================= */
 
   return (
     <Landing
@@ -209,6 +234,11 @@ function Navbar({
   user,
   logout,
 }) {
+  const displayName =
+    user?.user_metadata?.name ||
+    user?.email?.split("@")[0] ||
+    "U";
+
   return (
     <header className="navbar">
 
@@ -248,12 +278,9 @@ function Navbar({
               onClick={() =>
                 navigate("/dashboard")
               }
+              title={displayName}
             >
-              {(
-                user.user_metadata?.name ||
-                user.email ||
-                "U"
-              )
+              {displayName
                 .charAt(0)
                 .toUpperCase()}
             </button>
@@ -288,13 +315,21 @@ function Navbar({
 }
 
 /* =========================================================
-   LANDING
+   LANDING PAGE
 ========================================================= */
 
 function Landing({
   navigate,
   user,
 }) {
+  const handleStart = () => {
+    if (user) {
+      navigate("/dashboard");
+    } else {
+      navigate("/signup");
+    }
+  };
+
   return (
     <div className="app">
 
@@ -304,6 +339,8 @@ function Landing({
       />
 
       <main>
+
+        {/* HERO */}
 
         <section className="hero">
 
@@ -318,21 +355,16 @@ function Landing({
           </h1>
 
           <p className="hero-description">
-            A 60-day coding challenge that helps
-            Indian college students build consistently,
-            prove their work and get noticed by recruiters.
+            A 60-day coding challenge that
+            helps Indian college students
+            build consistently, prove their
+            work and get noticed by recruiters.
           </p>
 
           <button
-            className="primary-button"
+            className="primary-button hero-button"
             type="button"
-            onClick={() =>
-              navigate(
-                user
-                  ? "/dashboard"
-                  : "/signup"
-              )
-            }
+            onClick={handleStart}
           >
             {user
               ? "Go to dashboard →"
@@ -344,6 +376,8 @@ function Landing({
           </p>
 
         </section>
+
+        {/* STATS */}
 
         <section className="stats">
 
@@ -367,6 +401,8 @@ function Landing({
 
         </section>
 
+        {/* HOW IT WORKS */}
+
         <section className="how-section">
 
           <div className="section-label">
@@ -376,9 +412,7 @@ function Landing({
           <h2>
             Small progress.
             <br />
-            <span>
-              Every single day.
-            </span>
+            <span>Every single day.</span>
           </h2>
 
           <div className="feature-list">
@@ -405,6 +439,8 @@ function Landing({
 
         </section>
 
+        {/* CTA */}
+
         <section className="cta-card">
 
           <h2>
@@ -414,13 +450,7 @@ function Landing({
           <button
             className="secondary-button"
             type="button"
-            onClick={() =>
-              navigate(
-                user
-                  ? "/dashboard"
-                  : "/signup"
-              )
-            }
+            onClick={handleStart}
           >
             Explore dashboard →
           </button>
@@ -444,6 +474,18 @@ function Dashboard({
   user,
   logout,
 }) {
+  const TOTAL_DAYS = 60;
+  const COMPLETED_DAYS = 18;
+  const CURRENT_STREAK = 12;
+
+  const percentage = Math.round(
+    (COMPLETED_DAYS / TOTAL_DAYS) * 100
+  );
+
+  const streakPercentage = Math.round(
+    (CURRENT_STREAK / TOTAL_DAYS) * 100
+  );
+
   const [githubUrl, setGithubUrl] =
     useState("");
 
@@ -456,64 +498,67 @@ function Dashboard({
   const [saveError, setSaveError] =
     useState("");
 
+  const name =
+    user?.user_metadata?.name ||
+    user?.email?.split("@")[0] ||
+    "Student";
+
   /* -------------------------------------------------------
-     LOAD CURRENT USER LINKS
+     LOAD LINKS
   ------------------------------------------------------- */
 
   useEffect(() => {
     setGithubUrl(
-      user.user_metadata?.github_url || ""
+      user?.user_metadata?.github_url || ""
     );
 
     setLinkedinUrl(
-      user.user_metadata?.linkedin_url || ""
+      user?.user_metadata?.linkedin_url || ""
     );
   }, [user]);
 
   /* -------------------------------------------------------
-     SAVE USER PROFILE
+     SAVE LINKS
   ------------------------------------------------------- */
 
   const saveProfile = async () => {
     setSaved(false);
     setSaveError("");
 
-    const {
-      data,
-      error,
-    } = await supabase.auth.updateUser({
-      data: {
-        name:
-          user.user_metadata?.name ||
-          user.email?.split("@")[0] ||
-          "Student",
+    try {
+      const {
+        data,
+        error,
+      } = await supabase.auth.updateUser({
+        data: {
+          name:
+            user?.user_metadata?.name ||
+            user?.email?.split("@")[0] ||
+            "Student",
 
-        github_url:
-          githubUrl.trim(),
+          github_url:
+            githubUrl.trim(),
 
-        linkedin_url:
-          linkedinUrl.trim(),
-      },
-    });
+          linkedin_url:
+            linkedinUrl.trim(),
+        },
+      });
 
-    if (error) {
-      setSaveError(error.message);
-      return;
-    }
+      if (error) {
+        setSaveError(error.message);
+        return;
+      }
 
-    if (data.user) {
-      setSaved(true);
+      if (data?.user) {
+        setSaved(true);
+      }
+    } catch (error) {
+      console.error(error);
+      setSaveError(
+        "Unable to save profile links."
+      );
     }
   };
-
-  const percentage = Math.round(
-    (18 / 60) * 100
-  );
-
-  const name =
-    user.user_metadata?.name ||
-    user.email?.split("@")[0] ||
-    "Student";
 
   return (
     <div className="app">
@@ -525,6 +570,8 @@ function Dashboard({
       />
 
       <main className="dashboard-page">
+
+        {/* HEADER */}
 
         <section className="dashboard-heading">
 
@@ -546,7 +593,7 @@ function Dashboard({
           </div>
 
           <div className="day-pill">
-            DAY 12/60
+            DAY 12 / 60
           </div>
 
         </section>
@@ -554,6 +601,8 @@ function Dashboard({
         {/* STATS */}
 
         <section className="dashboard-stats">
+
+          {/* STREAK */}
 
           <div className="dashboard-card">
 
@@ -563,33 +612,34 @@ function Dashboard({
                 Current streak
               </span>
 
-              <span>
-                🔥
-              </span>
+              <span>🔥</span>
 
             </div>
 
             <div className="big-number">
-              12
+              {CURRENT_STREAK}
               <small> days</small>
             </div>
 
             <p>
-              You're on a roll!
-              Keep your streak alive today.
+              You're on a roll! Keep your
+              streak alive today.
             </p>
 
             <div className="progress-line">
 
               <div
                 style={{
-                  width: "60%",
+                  width:
+                    `${streakPercentage}%`,
                 }}
               />
 
             </div>
 
           </div>
+
+          {/* COMPLETION */}
 
           <div className="dashboard-card">
 
@@ -599,9 +649,7 @@ function Dashboard({
                 Overall completion
               </span>
 
-              <span>
-                📈
-              </span>
+              <span>📈</span>
 
             </div>
 
@@ -610,14 +658,16 @@ function Dashboard({
             </div>
 
             <p>
-              18 of 60 days completed
+              {COMPLETED_DAYS} of{" "}
+              {TOTAL_DAYS} days completed
             </p>
 
             <div className="progress-line">
 
               <div
                 style={{
-                  width: `${percentage}%`,
+                  width:
+                    `${percentage}%`,
                 }}
               />
 
@@ -627,7 +677,7 @@ function Dashboard({
 
         </section>
 
-        {/* TODAY */}
+        {/* TODAY'S TASK */}
 
         <section className="today-card">
 
@@ -640,7 +690,7 @@ function Dashboard({
               </div>
 
               <h2>
-                Day 12:{" "}
+                Day {today.day}:{" "}
                 {today.title}
               </h2>
 
@@ -684,7 +734,7 @@ function Dashboard({
 
         </section>
 
-        {/* USER PROFILE LINKS */}
+        {/* PROFILE LINKS */}
 
         <section className="profile-card">
 
@@ -703,57 +753,65 @@ function Dashboard({
 
           <div className="profile-form">
 
-            <label>
-              GitHub profile / repository URL
-            </label>
+            <div className="input-group">
 
-            <input
-              type="url"
-              placeholder="https://github.com/yourusername"
-              value={githubUrl}
-              onChange={(event) =>
-                setGithubUrl(
-                  event.target.value
-                )
-              }
-            />
+              <label>
+                GitHub profile / repository URL
+              </label>
 
-            <label>
-              LinkedIn profile / post URL
-            </label>
+              <input
+                type="url"
+                placeholder="https://github.com/yourusername"
+                value={githubUrl}
+                onChange={(event) =>
+                  setGithubUrl(
+                    event.target.value
+                  )
+                }
+              />
 
-            <input
-              type="url"
-              placeholder="https://linkedin.com/in/yourname"
-              value={linkedinUrl}
-              onChange={(event) =>
-                setLinkedinUrl(
-                  event.target.value
-                )
-              }
-            />
+            </div>
+
+            <div className="input-group">
+
+              <label>
+                LinkedIn profile / post URL
+              </label>
+
+              <input
+                type="url"
+                placeholder="https://linkedin.com/in/yourname"
+                value={linkedinUrl}
+                onChange={(event) =>
+                  setLinkedinUrl(
+                    event.target.value
+                  )
+                }
+              />
+
+            </div>
 
             <button
-              className="primary-button"
+              className="primary-button save-button"
               type="button"
               onClick={saveProfile}
             >
               Save profile links →
             </button>
 
-            {saved && (
-              <div className="auth-success">
-                Profile links saved successfully.
-              </div>
-            )}
-
-            {saveError && (
-              <div className="auth-error">
-                {saveError}
-              </div>
-            )}
-
           </div>
+
+          {saved && (
+            <div className="auth-success">
+              ✓ Profile links saved successfully.
+            </div>
+          )}
+
+          {saveError && (
+            <div className="auth-error">
+              {saveError}
+            </div>
+          )}
 
         </section>
 
@@ -773,7 +831,6 @@ function Dashboard({
 
             {achievements.map(
               (item, index) => (
-
                 <div
                   className="achievement-card"
                   key={index}
@@ -796,7 +853,6 @@ function Dashboard({
                   </div>
 
                 </div>
-
               )
             )}
 
@@ -821,25 +877,138 @@ function ChallengeDay({
   user,
   logout,
 }) {
+  const TOTAL_DAYS = 60;
+  const COMPLETED_DAYS = 18;
+  const CURRENT_STREAK = 12;
+
+  /* 18 / 60 = 30% */
+  const progressPercentage = Math.round(
+    (COMPLETED_DAYS / TOTAL_DAYS) * 100
+  );
+
+  /* 12 / 60 = 20% */
+  const streakPercentage = Math.round(
+    (CURRENT_STREAK / TOTAL_DAYS) * 100
+  );
+
   const [githubUrl, setGithubUrl] =
-    useState(
-      user.user_metadata?.github_url || ""
-    );
+    useState("");
 
   const [linkedinUrl, setLinkedinUrl] =
-    useState(
-      user.user_metadata?.linkedin_url || ""
-    );
+    useState("");
+
+  const [loadingLinks, setLoadingLinks] =
+    useState(true);
+
+  /* -------------------------------------------------------
+     LOAD USER LINKS
+  ------------------------------------------------------- */
 
   useEffect(() => {
-    setGithubUrl(
-      user.user_metadata?.github_url || ""
-    );
+    let mounted = true;
 
-    setLinkedinUrl(
-      user.user_metadata?.linkedin_url || ""
+    const loadLinks = async () => {
+      try {
+        const {
+          data,
+          error,
+        } = await supabase.auth.getUser();
+
+        if (
+          mounted &&
+          !error &&
+          data?.user
+        ) {
+          setGithubUrl(
+            data.user.user_metadata?.github_url ||
+              ""
+          );
+
+          setLinkedinUrl(
+            data.user.user_metadata?.linkedin_url ||
+              ""
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Profile link error:",
+          error
+        );
+      } finally {
+        if (mounted) {
+          setLoadingLinks(false);
+        }
+      }
+    };
+
+    loadLinks();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  /* -------------------------------------------------------
+     NORMALIZE URL
+  ------------------------------------------------------- */
+
+  const normalizeUrl = (value) => {
+    const trimmed =
+      value?.trim() || "";
+
+    if (!trimmed) {
+      return "";
+    }
+
+    if (
+      trimmed.startsWith("http://") ||
+      trimmed.startsWith("https://")
+    ) {
+      return trimmed;
+    }
+
+    return `https://${trimmed}`;
+  };
+
+  /* -------------------------------------------------------
+     GITHUB
+  ------------------------------------------------------- */
+
+  const handleGithub = () => {
+    const url =
+      normalizeUrl(githubUrl);
+
+    if (!url) {
+      navigate("/dashboard");
+      return;
+    }
+
+    window.open(
+      url,
+      "_blank",
+      "noopener,noreferrer"
     );
-  }, [user]);
+  };
+
+  /* -------------------------------------------------------
+     LINKEDIN
+  ------------------------------------------------------- */
+
+  const handleLinkedin = () => {
+    const url =
+      normalizeUrl(linkedinUrl);
+
+    if (!url) {
+      navigate("/dashboard");
+      return;
+    }
+
+    window.open(
+      url,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
 
   return (
     <div className="app">
@@ -851,6 +1020,8 @@ function ChallengeDay({
       />
 
       <main className="challenge-page">
+
+        {/* BACK */}
 
         <button
           className="back-button"
@@ -867,7 +1038,7 @@ function ChallengeDay({
         <section className="challenge-header">
 
           <div className="day-label">
-            DAY 12 / 60
+            DAY {today.day} / {TOTAL_DAYS}
           </div>
 
           <h1>
@@ -896,11 +1067,15 @@ function ChallengeDay({
 
         </section>
 
+        {/* MAIN */}
+
         <section className="challenge-grid">
+
+          {/* LEFT */}
 
           <div className="challenge-main">
 
-            {/* MISSION */}
+            {/* PROBLEM */}
 
             <div className="content-card">
 
@@ -921,6 +1096,25 @@ function ChallengeDay({
               </p>
 
               <h3>
+                Problem statement
+              </h3>
+
+              <p>
+                Students often struggle to
+                understand their learning progress
+                because their tasks, streaks,
+                goals and completed work are
+                scattered across different platforms.
+              </p>
+
+              <p>
+                Build a clean and responsive
+                student dashboard that brings
+                all important learning information
+                into one place.
+              </p>
+
+              <h3>
                 What you need to build
               </h3>
 
@@ -928,7 +1122,6 @@ function ChallengeDay({
 
                 {tasks.map(
                   (task, index) => (
-
                     <div
                       className="check-item"
                       key={index}
@@ -943,7 +1136,6 @@ function ChallengeDay({
                       </span>
 
                     </div>
-
                   )
                 )}
 
@@ -962,6 +1154,11 @@ function ChallengeDay({
               <h2>
                 Show what you built
               </h2>
+
+              <p>
+                These links belong to your
+                logged-in account.
+              </p>
 
               {/* GITHUB */}
 
@@ -984,19 +1181,23 @@ function ChallengeDay({
 
                 </div>
 
-                {githubUrl ? (
-
-                  <a
+                {loadingLinks ? (
+                  <button
                     className="outline-button"
-                    href={githubUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    type="button"
+                    disabled
+                  >
+                    Loading...
+                  </button>
+                ) : githubUrl ? (
+                  <button
+                    className="outline-button"
+                    type="button"
+                    onClick={handleGithub}
                   >
                     Open GitHub →
-                  </a>
-
+                  </button>
                 ) : (
-
                   <button
                     className="outline-button"
                     type="button"
@@ -1006,7 +1207,6 @@ function ChallengeDay({
                   >
                     Add GitHub →
                   </button>
-
                 )}
 
               </div>
@@ -1032,19 +1232,23 @@ function ChallengeDay({
 
                 </div>
 
-                {linkedinUrl ? (
-
-                  <a
+                {loadingLinks ? (
+                  <button
                     className="outline-button"
-                    href={linkedinUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    type="button"
+                    disabled
+                  >
+                    Loading...
+                  </button>
+                ) : linkedinUrl ? (
+                  <button
+                    className="outline-button"
+                    type="button"
+                    onClick={handleLinkedin}
                   >
                     Open LinkedIn →
-                  </a>
-
+                  </button>
                 ) : (
-
                   <button
                     className="outline-button"
                     type="button"
@@ -1054,7 +1258,6 @@ function ChallengeDay({
                   >
                     Add LinkedIn →
                   </button>
-
                 )}
 
               </div>
@@ -1063,9 +1266,11 @@ function ChallengeDay({
 
           </div>
 
-          {/* SIDEBAR */}
+          {/* RIGHT */}
 
           <aside className="challenge-sidebar">
+
+            {/* PROGRESS */}
 
             <div className="side-card">
 
@@ -1073,16 +1278,27 @@ function ChallengeDay({
                 YOUR PROGRESS
               </div>
 
-              <div className="circle-progress">
+              <div
+                className="circle-progress"
+                style={{
+                  background:
+                    `conic-gradient(
+                      #8b5cf6
+                      ${progressPercentage * 3.6}deg,
+                      #211b2b
+                      ${progressPercentage * 3.6}deg
+                    )`,
+                }}
+              >
 
                 <strong>
-                  20%
+                  {progressPercentage}%
                 </strong>
 
               </div>
 
               <h3>
-                18 / 60 days
+                {COMPLETED_DAYS} / {TOTAL_DAYS} days
               </h3>
 
               <p>
@@ -1092,6 +1308,8 @@ function ChallengeDay({
 
             </div>
 
+            {/* STREAK */}
+
             <div className="side-card">
 
               <div className="section-label">
@@ -1099,12 +1317,42 @@ function ChallengeDay({
               </div>
 
               <div className="side-streak">
-                🔥 12 days
+                🔥 {CURRENT_STREAK} days
               </div>
 
               <p>
                 Complete today's task
                 to keep it alive.
+              </p>
+
+              <div className="progress-line">
+
+                <div
+                  style={{
+                    width:
+                      `${streakPercentage}%`,
+                  }}
+                />
+
+              </div>
+
+            </div>
+
+            {/* DAY */}
+
+            <div className="side-card">
+
+              <div className="section-label">
+                DAY {today.day}
+              </div>
+
+              <h3>
+                Keep building.
+              </h3>
+
+              <p>
+                One build every day.
+                One stronger portfolio.
               </p>
 
             </div>
@@ -1122,7 +1370,7 @@ function ChallengeDay({
 }
 
 /* =========================================================
-   STAT COMPONENT
+   STAT
 ========================================================= */
 
 function Stat({
@@ -1150,7 +1398,7 @@ function Stat({
 }
 
 /* =========================================================
-   FEATURE COMPONENT
+   FEATURE
 ========================================================= */
 
 function Feature({

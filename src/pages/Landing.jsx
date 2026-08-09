@@ -1,22 +1,71 @@
-import Navbar from '../components/Navbar'
-import BottomNav from '../components/BottomNav'
+import React from "react";
 
 export default function Landing({ navigate }) {
+  const goToDashboard = () => {
+    if (navigate) {
+      navigate("/dashboard");
+    } else {
+      window.location.href = "/dashboard";
+    }
+  };
+
+  const goToLogin = () => {
+    if (navigate) {
+      navigate("/login");
+    } else {
+      window.location.href = "/login";
+    }
+  };
+
   return (
     <div className="app-shell">
 
-      <Navbar navigate={navigate} active="home" />
+      {/* ================= NAVBAR ================= */}
+      <nav className="top-navbar">
 
-      <main>
+        <button
+          className="logo"
+          onClick={() => {
+            if (navigate) {
+              navigate("/");
+            } else {
+              window.location.href = "/";
+            }
+          }}
+        >
+          AB<span>Talks</span>
+        </button>
 
-        {/* HERO */}
+        <div className="nav-right">
 
-        <section className="hero">
+          <button
+            className="nav-dashboard"
+            onClick={goToDashboard}
+          >
+            Dashboard
+          </button>
 
-          <div className="hero-badge">
-            <span>✦</span>
-            BUILT FOR STUDENTS
-          </div>
+          <button
+            className="nav-login"
+            onClick={goToLogin}
+          >
+            Login
+          </button>
+
+        </div>
+
+      </nav>
+
+
+      {/* ================= MAIN ================= */}
+      <main className="landing-container">
+
+        {/* ================= HERO ================= */}
+        <section className="hero-section">
+
+          <span className="small-label">
+            ✦ BUILT FOR STUDENTS
+          </span>
 
           <h1>
             Build every day.
@@ -24,49 +73,58 @@ export default function Landing({ navigate }) {
             <span>Be seen.</span>
           </h1>
 
-          <p className="hero-text">
+          <p>
             A 60-day coding challenge that helps Indian college
             students build consistently, prove their work and get
             noticed by recruiters.
           </p>
 
-          <button
-            className="primary-button hero-button"
-            onClick={() => navigate('/dashboard')}
-          >
-            Start your challenge
-            <span>→</span>
-          </button>
+          <div className="hero-buttons">
 
-          <p className="hero-note">
-            Free · Student focused · 60 days
-          </p>
+            <button
+              className="primary-button"
+              onClick={goToDashboard}
+            >
+              Start your challenge →
+            </button>
+
+            <button
+              className="secondary-button"
+              onClick={goToLogin}
+            >
+              Login to continue
+            </button>
+
+          </div>
+
+          <div className="hero-meta">
+            <span>Free</span>
+            <span>•</span>
+            <span>Student focused</span>
+            <span>•</span>
+            <span>60 days</span>
+          </div>
 
         </section>
 
 
-        {/* STATS */}
+        {/* ================= NUMBERS ================= */}
+        <section className="numbers-section">
 
-        <section className="stats-card">
-
-          <div className="stat">
-            <span className="stat-icon">♨</span>
+          <div className="number-card">
+            <span>🔥</span>
             <strong>60</strong>
             <small>Days</small>
           </div>
 
-          <div className="stat-divider" />
-
-          <div className="stat">
-            <span className="stat-icon">⌘</span>
+          <div className="number-card">
+            <span>&lt;/&gt;</span>
             <strong>1</strong>
             <small>Build / day</small>
           </div>
 
-          <div className="stat-divider" />
-
-          <div className="stat">
-            <span className="stat-icon">♕</span>
+          <div className="number-card">
+            <span>🏆</span>
             <strong>∞</strong>
             <small>Growth</small>
           </div>
@@ -74,90 +132,120 @@ export default function Landing({ navigate }) {
         </section>
 
 
-        {/* HOW IT WORKS */}
+        {/* ================= HOW IT WORKS ================= */}
+        <section className="how-section">
 
-        <section className="section">
-
-          <div className="section-label">
+          <span className="small-label">
             HOW IT WORKS
-          </div>
+          </span>
 
-          <h2 className="section-title">
+          <h2>
             Small progress.
             <br />
             <span>Every single day.</span>
           </h2>
 
-          <div className="feature-list">
 
-            <Feature
-              icon="⌘"
-              title="Build something"
-              text="Complete a daily coding task and push your work to GitHub."
-            />
+          <div className="feature-grid">
 
-            <Feature
-              icon="✓"
-              title="Prove your work"
-              text="Share your progress through GitHub and LinkedIn."
-            />
+            {/* CARD 1 */}
+            <article className="feature-card">
 
-            <Feature
-              icon="♕"
-              title="Get discovered"
-              text="Build a public track record that recruiters can actually see."
-            />
+              <div className="feature-icon">
+                &lt;/&gt;
+              </div>
+
+              <h3>
+                Build something
+              </h3>
+
+              <p>
+                Complete a daily coding task and push your work
+                to GitHub.
+              </p>
+
+            </article>
+
+
+            {/* CARD 2 */}
+            <article className="feature-card">
+
+              <div className="feature-icon">
+                ✓
+              </div>
+
+              <h3>
+                Prove your work
+              </h3>
+
+              <p>
+                Share your progress through GitHub and LinkedIn.
+              </p>
+
+            </article>
+
+
+            {/* CARD 3 */}
+            <article className="feature-card">
+
+              <div className="feature-icon">
+                🏆
+              </div>
+
+              <h3>
+                Get discovered
+              </h3>
+
+              <p>
+                Build a public track record that recruiters can
+                actually see.
+              </p>
+
+            </article>
 
           </div>
 
         </section>
 
 
-        {/* CTA */}
+        {/* ================= CTA ================= */}
+        <section className="cta-section">
 
-        <section className="cta-card">
+          <span className="small-label">
+            YOUR JOURNEY STARTS HERE
+          </span>
 
           <h2>
-            Ready to build your streak?
+            Ready to build
+            <br />
+            your streak?
           </h2>
 
           <button
-            className="secondary-button"
-            onClick={() => navigate('/dashboard')}
+            className="primary-button"
+            onClick={goToDashboard}
           >
-            Explore dashboard
-            <span>→</span>
+            Explore dashboard →
           </button>
 
         </section>
 
       </main>
 
-      <footer className="footer">
-        <strong>ABTalks</strong>
-        <span>60-Day Coding Challenge</span>
+
+      {/* ================= FOOTER ================= */}
+      <footer className="site-footer">
+
+        <strong>
+          AB<span>Talks</span>
+        </strong>
+
+        <small>
+          60-Day Coding Challenge
+        </small>
+
       </footer>
 
-      <BottomNav navigate={navigate} active="home" />
-
     </div>
-  )
-}
-
-
-function Feature({ icon, title, text }) {
-  return (
-    <div className="feature">
-
-      <div className="feature-icon">
-        {icon}
-      </div>
-
-      <div>
-        <h3>{title}</h3>
-        <p>{text}</p>
-      </div>
-
-    </div>
-  )
+  );
 }
